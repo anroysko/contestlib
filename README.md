@@ -4,7 +4,7 @@ TODO:
 - Math
   - [ ] FFT
   - [ ] Simplex
-  - [ ] Berlecampmassey
+  - [ ] Berlecamp-massey
 - Number theory
   - [ ] Extended Euclidean
   - [ ] Pollard-rho
@@ -21,34 +21,34 @@ TODO:
 - Bigint
   - [ ] Addition, Multiplication, Modulo
 - Datastructure
-  - [ ] Treap
+  - [ ] Treap
   - [ ] Link/Cut tree
   - [ ] Dynamic Convex Hull
   - [ ] HLD
   - [ ] Indexed set
 - Matrix
-  - [ ] Strassen multiplication
+  - [ ] Strassen Multiplication
   - [ ] Gauss-Jordan
 - Combinatorics
   - [ ] Fast Hadamard Transform
 - String
   - [ ] KMP
-  - [ ] Z-algorithm
-  - [ ] Suffix tree
+  - [ ] Z-algorithm
+  - [ ] Suffix tree
   - [ ] Suffix array
-  - [ ] LCP array
+  - [ ] LCP array
 - Geometry
 - Graph
-  - [ ] Bridges
-  - [ ] Cut Vertices
+  - [ ] Bridges
+  - [ ] Cut Vertices
   - [ ] Euler tour
-  - [ ] Strongly-connected components
-  - [ ] Min spanning tree
-  - [ ] Min directed spanning tree
-  - [ ] Tree fast ascent
-  - [ ] Dynamic Connectivity (offline)
+  - [ ] Strongly connected components
+  - [ ] Min spanning tree
+  - [ ] Min directed spanning tree
+  - [ ] Fast ascent in tree
+  - [ ] Offline dynamic connectivity
   - [ ] Maximum flow (Dinic)
-  - [ ] Maximum flow (Scaling flow)
+  - [ ] Maximum flow (Scaling flow)
   - [ ] Min-cost flow
   - [ ] General Matching
 - Util
