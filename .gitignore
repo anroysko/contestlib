@@ -1,0 +1,7 @@
+# no extensionless files (executables)
+*
+!/**/
+!*.*
+
+# remove object files and such
+*.o
