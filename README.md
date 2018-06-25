@@ -1,3 +1,55 @@
-# Contestlib (under construction!)
+# Contestlib
 
-
+TODO:
+- Math
+  - [ ] FFT
+  - [ ] Simplex
+  - [ ] Berlecampmassey
+- Number theory
+  - [ ] Extended Euclidean
+  - [ ] Pollard-rho
+  - [ ] Linear Sieve
+  - [ ] Miller-rabin primality test
+  - [ ] Chinese Remainder Theorem
+  - [ ] Primitive root
+  - [ ] Discrete Logarithm mod prime
+  - [ ] NTT
+- Polynomials
+  - [ ] Addition, Multiplication, Modulo
+  - [ ] O(n log^2(n)) Evaluation at n points
+  - [ ] O(n log^2(n)) Interpolation
+- Bigint
+  - [ ] Addition, Multiplication, Modulo
+- Datastructure
+  - [ ] Treap
+  - [ ] Link/Cut tree
+  - [ ] Dynamic Convex Hull
+  - [ ] HLD
+  - [ ] Indexed set
+- Matrix
+  - [ ] Strassen multiplication
+  - [ ] Gauss-Jordan
+- Combinatorics
+  - [ ] Fast Hadamard Transform
+- String
+  - [ ] KMP
+  - [ ] Z-algorithm
+  - [ ] Suffix tree
+  - [ ] Suffix array
+  - [ ] LCP array
+- Geometry
+- Graph
+  - [ ] Bridges
+  - [ ] Cut Vertices
+  - [ ] Euler tour
+  - [ ] Strongly-connected components
+  - [ ] Min spanning tree
+  - [ ] Min directed spanning tree
+  - [ ] Tree fast ascent
+  - [ ] Dynamic Connectivity (offline)
+  - [ ] Maximum flow (Dinic)
+  - [ ] Maximum flow (Scaling flow)
+  - [ ] Min-cost flow
+  - [ ] General Matching
+- Util
+  - [ ] 2-Sat
