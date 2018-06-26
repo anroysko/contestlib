@@ -3,7 +3,7 @@
 TODO:
 - Math
   - [ ] FFT
-  - [ ] Fast Hadamard Transform
+  - [x] Fast Hadamard Transform
   - [ ] Simplex
   - [ ] Berlecamp-massey
   - [ ] Gauss-Jordan
