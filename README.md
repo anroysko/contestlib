@@ -3,8 +3,10 @@
 TODO:
 - Math
   - [ ] FFT
+  - [ ] Fast Hadamard Transform
   - [ ] Simplex
   - [ ] Berlecamp-massey
+  - [ ] Gauss-Jordan
 - Number theory
   - [ ] Extended Euclidean
   - [ ] Pollard-rho
@@ -14,30 +16,18 @@ TODO:
   - [ ] Primitive root
   - [ ] Discrete Logarithm mod prime
   - [ ] NTT
-- Polynomials
-  - [ ] Addition, Multiplication, Modulo
-  - [ ] O(n log^2(n)) Evaluation at n points
-  - [ ] O(n log^2(n)) Interpolation
-- Bigint
-  - [ ] Addition, Multiplication, Modulo
 - Datastructure
   - [ ] Treap
   - [ ] Link/Cut tree
   - [ ] Dynamic Convex Hull
   - [ ] HLD
   - [ ] Indexed set
-- Matrix
-  - [ ] Strassen Multiplication
-  - [ ] Gauss-Jordan
-- Combinatorics
-  - [ ] Fast Hadamard Transform
 - String
   - [ ] KMP
   - [ ] Z-algorithm
   - [ ] Suffix tree
   - [ ] Suffix array
   - [ ] LCP array
-- Geometry
 - Graph
   - [ ] Bridges
   - [ ] Cut Vertices
@@ -53,3 +43,7 @@ TODO:
   - [ ] General Matching
 - Util
   - [ ] 2-Sat
+  - [ ] BigInt Addition, Multiplication, Modulo
+  - [ ] Polynomial addition, multiplication, modulo
+  - [ ] O(n log^2(n)) polynomial evaluation at n points
+  - [ ] O(n log^2(n)) polynomial interpolation
