@@ -7,21 +7,26 @@ TODO:
   - [ ] Simplex
   - [ ] Berlecamp-massey
   - [ ] Gauss-Jordan
+  - [x] Calculation of determinant
+  - [x] LUP-decomposition
 - Number theory
-  - [ ] Extended Euclidean
+  - [x] Extended Euclidean
   - [ ] Pollard-rho
   - [ ] Linear Sieve
   - [ ] Miller-rabin primality test
   - [ ] Chinese Remainder Theorem
   - [ ] Primitive root
-  - [ ] Discrete Logarithm mod prime
+  - [ ] Adleman-Manders-Miller
   - [ ] NTT
 - Datastructure
   - [ ] Treap
-  - [ ] Link/Cut tree
-  - [ ] Dynamic Convex Hull
+  - [x] Dynamic Convex Hull
+  - [ ] Merge sparse segment tree
+  - [ ] History information sum segment tree
+  - [ ] Fast regular segment tree
   - [ ] HLD
   - [ ] Indexed set
+  - [ ] Link/Cut tree
 - String
   - [ ] KMP
   - [ ] Z-algorithm
