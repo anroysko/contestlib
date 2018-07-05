@@ -6,7 +6,10 @@ TODO:
   - [x] Fast Hadamard Transform
   - [ ] Simplex
   - [ ] Berlecamp-massey
+- Matrix
   - [ ] Gauss-Jordan
+  - [ ] Computing determinant
+  - [ ] Eigenvalues
 - Number theory
   - [ ] Extended Euclidean
   - [ ] Pollard-rho
