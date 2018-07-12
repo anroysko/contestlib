@@ -1,0 +1,7 @@
+https://codeforces.com/blog/entry/58311
+
+https://arxiv.org/pdf/1111.4877.pdf
+
+https://gist.github.com/hellman/49510790103d96a8d5259e578ffc2579
+
+Lattice reduction for hash collision finding
