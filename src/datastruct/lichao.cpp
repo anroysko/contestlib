@@ -9,7 +9,7 @@ const ll INF = 1e18;
 // Li Chao tree for convex hull trick.
 // https://cp-algorithms.com/geometry/convex_hull_trick.html
 // Lines are of form first + second * x
-// Can be modified to support undoing of operations
+// See also version that supports undoing, in same directory.
 struct DynamicHull {
 	vector<pair<ll, ll>> tree; // Tree of lines
 	vector<ll> xcd; // x-coordinate of point i
@@ -53,18 +53,18 @@ struct DynamicHull {
 			break;
 		}
 	}
-	ll getVal(ll x) const {
+	ll getVal(int j) const {
 		int i = 1;
 		int ia = 0;
 		int ib = h-2;
 		ll res = INF;
 		while(true) {
 			int mid = (ia + ib) >> 1;
-			res = min(res, eval(tree[i], xcd[x]));
-			if (x < mid) {
+			res = min(res, eval(tree[i], xcd[j]));
+			if (j < mid) {
 				i = i<<1;
 				ib = mid - 1;
-			} else if (mid < x) {
+			} else if (mid < j) {
 				i = (i<<1)^1;
 				ia = mid + 1;
 			} else {

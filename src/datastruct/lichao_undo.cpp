@@ -59,18 +59,18 @@ struct DynamicHull {
 			break;
 		}
 	}
-	ll getVal(ll x) const {
+	ll getVal(int j) const {
 		int i = 1;
 		int ia = 0;
 		int ib = h-2;
 		ll res = INF;
 		while(true) {
 			int mid = (ia + ib) >> 1;
-			res = min(res, eval(tree[i].back(), xcd[x]));
-			if (x < mid) {
+			res = min(res, eval(tree[i].back(), xcd[j]));
+			if (j < mid) {
 				i = i<<1;
 				ib = mid - 1;
-			} else if (mid < x) {
+			} else if (mid < j) {
 				i = (i<<1)^1;
 				ia = mid + 1;
 			} else {
@@ -90,23 +90,106 @@ struct DynamicHull {
 	}
 };
 
-int main() {
-	vector<ll> xcd = {0, 2, 5, 11};
-	DynamicHull hull;
-	hull.init(xcd);
+// Example usage
+// Solves https://cses.fi/ioi18/task/1424
+typedef pair<pair<int, int>, pair<int, int>> Event;
 
-	// Should print: 4 13 25 49
-	hull.addLine({4, 5});
-	hull.addLine({5, 4});
-	cout << hull.getVal(0) << ' ' << hull.getVal(1) << ' ' << hull.getVal(2) << ' ' << hull.getVal(3) << '\n';
-	int os = hull.changes.size();
+int bins(const vector<ll>& vec, ll v) {
+	int low = 0;
+	int high = (int)vec.size() - 1;
+	while(low < high) {
+		int mid = (low + high) >> 1;
+		if (vec[mid] < v) {
+			low = mid + 1;
+		} else {
+			high = mid;
+		}
+	}
+	return high;
+}
+
+const int Q = 4 * (int)1e5;
+vector<int> asks[Q];
+DynamicHull hull;
+
+void dynCon(int ia, int ib, const vector<Event>& events) {
+	vector<Event> left_events;
+	vector<Event> right_events;
+	int ics = hull.changes.size();
+	int mid = (ia + ib) >> 1;
+	for (auto it : events) {
+		int itia = it.first.first;
+		int itib = it.first.second;
+		if (itia <= ia && ib <= itib) {
+			hull.addLine(it.second);
+		} else {
+			if (itia <= mid) left_events.push_back(it);
+			if (itib > mid) right_events.push_back(it);
+		}
+	}
 	
-	// Should print: 4 13 24 37
-	hull.addLine({9, 3});
-	hull.addLine({15, 2});
-	cout << hull.getVal(0) << ' ' << hull.getVal(1) << ' ' << hull.getVal(2) << ' ' << hull.getVal(3) << '\n';
+	if (ia == ib) {
+		for (auto it : asks[ia]) cout << hull.getVal(it) << '\n';
+	} else {
+		dynCon(ia, mid, left_events);
+		dynCon(mid+1, ib, right_events);
+	}
+	hull.undo(ics);
+}
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(0);
+
+	int n, q;
+	cin >> n >> q;
+	vector<pair<ll, ll>> lines(n);
+	for (int i = 0; i < n; ++i) cin >> lines[i].first;
+	for (int i = 0; i < n; ++i) cin >> lines[i].second;
 	
-	// Should print: 4 13 25 49
-	hull.undo(os);
-	cout << hull.getVal(0) << ' ' << hull.getVal(1) << ' ' << hull.getVal(2) << ' ' << hull.getVal(3) << '\n';
+	vector<ll> xs;
+	xs.reserve(q);
+	vector<pair<int, int>> ques(q);
+	for (int i = 0; i < q; ++i) {
+		int t, v;
+		cin >> t >> v;
+		if (t == 3) {
+			xs.push_back(v);
+		} else {
+			--v;
+		}
+		ques[i] = {t, v};
+	}
+
+	sort(xs.begin(), xs.end());
+	xs.erase(unique(xs.begin(), xs.end()), xs.end());
+	hull.init(xs);
+
+	// Prepare events for offline dynamic connectivity
+	int j = 0;
+	bool lq = false; // Was last operation a query? Used to pack query indexes.
+	vector<int> lap(n, 0); // Last Appearance
+	vector<Event> events;
+	events.reserve(q);
+	for (int i = 0; i < q; ++i) {
+		int v = ques[i].second;
+		if (ques[i].first == 3) {
+			lq = true;
+			asks[j].push_back(bins(xs, v));
+		} else {
+			if (lq) ++j;
+			lq = false;
+			if (ques[i].first == 2) {
+				lap[v] = j;
+			} else {
+				if (j > lap[v]) events.push_back({{lap[v], j-1}, lines[v]});
+				lap[v] = Q;
+			}
+		}
+	}
+	for (int i = 0; i < n; ++i) {
+		if (lap[i] <= j) events.push_back({{lap[i], j}, lines[i]});
+	}
+	
+	dynCon(0, q-1, events);
 }
