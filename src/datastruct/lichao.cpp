@@ -13,12 +13,13 @@ const ll INF = 1e18;
 struct DynamicHull {
 	vector<pair<ll, ll>> tree; // Tree of lines
 	vector<ll> xcd; // x-coordinate of point i
-	int h;
+	int k;
 
 	void init(const vector<ll>& points) {
 		int n = points.size();
-		h = 1;
-		while(h <= n) h <<= 1;
+		k = 0;
+		while((1<<k) <= n) ++k;
+		int h = 1<<k;
 
 		xcd.resize(h);
 		tree.resize(h);
@@ -32,10 +33,14 @@ struct DynamicHull {
 	inline static bool comp(pair<ll, ll> l1, pair<ll, ll> l2, ll x) {
 		return ((l1.first - l2.first) + x * (l1.second - l2.second)) < 0;
 	}
+	inline int mapInd(int j) const {
+		int z = __builtin_ctz(j);
+		return ((1<<(k-z)) | (j>>z)) >> 1;
+	}
 	void addLine(pair<ll, ll> line) {
 		int i = 1;
 		int ia = 0;
-		int ib = h-2;
+		int ib = (1<<k)-2;
 		while(true) {
 			int mid = (ia + ib) >> 1;
 			if (comp(line, tree[i], xcd[mid])) swap(tree[i], line);
@@ -54,36 +59,44 @@ struct DynamicHull {
 		}
 	}
 	ll getVal(int j) const {
-		int i = 1;
-		int ia = 0;
-		int ib = h-2;
+		int i = mapInd(j + 1);
 		ll res = INF;
-		while(true) {
-			int mid = (ia + ib) >> 1;
+		while(i != 0) {
 			res = min(res, eval(tree[i], xcd[j]));
-			if (j < mid) {
-				i = i<<1;
-				ib = mid - 1;
-			} else if (mid < j) {
-				i = (i<<1)^1;
-				ia = mid + 1;
-			} else {
-				break;
-			}
+			i >>= 1;
 		}
 		return res;
 	}
 };
 
+
 int main() {
-	vector<ll> xcd = {0, 2, 5, 11};
+	ios_base::sync_with_stdio(false);
+	cin.tie(0);
+
+	int n, e;
+	cin >> n >> e;
+	vector<pair<ll, int>> ord(n);
+	vector<ll> xcd (n);
+	vector<int> ind_map (n);
+	for (int i = 0; i < n; ++i) {
+		ll a;
+		cin >> a;
+		ord[i] = {a, i};
+	}
+	sort(ord.begin(), ord.end());
+	for (int i = 0; i < n; ++i) {
+		xcd[i] = ord[i].first;
+		ind_map[i] = ord[i].second;
+	}
 	DynamicHull hull;
 	hull.init(xcd);
-
-	hull.addLine({4, 5});
-	hull.addLine({5, 4});
-	hull.addLine({9, 3});
-	hull.addLine({15, 2});
-	// Should print: 4 13 24 37
-	cout << hull.getVal(0) << ' ' << hull.getVal(1) << ' ' << hull.getVal(2) << ' ' << hull.getVal(3) << '\n';
+	hull.addLine({0, e});
+	for (int i = 0; i < n; ++i) {
+		ll b;
+		cin >> b;
+		ll offer = hull.getVal(ind_map[i]);
+		hull.addLine({offer, b});
+		if (i == n-1) cout << offer << '\n';
+	}
 }

@@ -14,12 +14,13 @@ struct DynamicHull {
 	vector<vector<pair<ll, ll>>> tree; // Tree of stacks of lines
 	vector<ll> xcd; // x-coordinate of point i
 	vector<int> changes;
-	int h;
+	int k;
 
 	void init(const vector<ll>& points) {
 		int n = points.size();
-		h = 1;
-		while(h <= n) h <<= 1;
+		k = 0;
+		while((1<<k) <= n) ++k;
+		int h = (1<<k);
 
 		xcd.resize(h);
 		tree.resize(h);
@@ -33,10 +34,14 @@ struct DynamicHull {
 	inline static bool comp(pair<ll, ll> l1, pair<ll, ll> l2, ll x) {
 		return ((l1.first - l2.first) + x * (l1.second - l2.second)) < 0;
 	}
+        inline int mapInd(int j) const {
+                int z = __builtin_ctz(j);
+                return ((1<<(k-z)) | (j>>z)) >> 1;
+        }
 	void addLine(pair<ll, ll> line) {
 		int i = 1;
 		int ia = 0;
-		int ib = h-2;
+		int ib = (1<<k)-2;
 		while(true) {
 			int mid = (ia + ib) >> 1;
 			auto cur = tree[i].back();
@@ -60,22 +65,11 @@ struct DynamicHull {
 		}
 	}
 	ll getVal(int j) const {
-		int i = 1;
-		int ia = 0;
-		int ib = h-2;
+		int i = mapInd(j + 1);
 		ll res = INF;
-		while(true) {
-			int mid = (ia + ib) >> 1;
+		while(i != 0) {
 			res = min(res, eval(tree[i].back(), xcd[j]));
-			if (j < mid) {
-				i = i<<1;
-				ib = mid - 1;
-			} else if (mid < j) {
-				i = (i<<1)^1;
-				ia = mid + 1;
-			} else {
-				break;
-			}
+			i >>= 1;
 		}
 		return res;
 	}
@@ -191,5 +185,5 @@ int main() {
 		if (lap[i] <= j) events.push_back({{lap[i], j}, lines[i]});
 	}
 	
-	dynCon(0, q-1, events);
+	dynCon(0, j, events);
 }
