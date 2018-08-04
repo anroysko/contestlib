@@ -33,7 +33,9 @@ int main() {
 	que2.push(e);
 	
 	que1.join(que2);
-	
+
+	for (auto it : que1) cout << it << ' '; cout << '\n';	
+
 	while(! que1.empty()) {
 		cout << que1.top() << ' ';
 		que1.pop();
