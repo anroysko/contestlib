@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <cmath>
 using namespace std;
 typedef long long ll;
 typedef __int128 lll;
@@ -25,8 +26,14 @@ int bins(const vector<T>& vec, T v) {
 	return low;
 }
 
-// Given a, b, finds gcd(a, b) and x, y, such that ax + by = gcd(a, b)
-// returns {gcd(a, b), {x, y}}
+// Calculates a^b mod c in log(b) time.
+ll modPow(ll a, ll b, ll c) {
+	if (b & 1) return ((lll)a * modPow(a, b^1, c)) % c;
+	if (b == 0) return 1 % c;
+	return modPow(((lll)a*a)%c, b>>1, c);
+}
+
+// returns {gcd(a, b), {x, y}} such that ax + by = gcd(a, b)
 pair<ll, pair<lll, lll>> extEuc(ll a, ll b) {
 	if (b == 0) return {a, {1, 0}};
 	ll k = a / b;
@@ -34,69 +41,66 @@ pair<ll, pair<lll, lll>> extEuc(ll a, ll b) {
 	return {sub.first, {sub.second, sub.first - k*sub.second}};
 }
 
-
-// Given a and b, gcd(a, b) = 1, returns x such that ax = 1 (mod b)
+// returns x such that ax = 1 (mod b). Requires gcd(a, b) = 1.
 ll modInv(ll a, ll b) {
 	auto sub = extEuc(a, b); // ax + by = 1 -> ax = 1 (b)
 	ll res = sub.second.first % b;
 	return (res < 0 ? res + b : res);
 }
 
-// Smallest x such that v <= x^2
-ll highSqrt(ll v) {
-	ll low = 0;
-	ll high = 1e9;
-	while(low != high) {
-		ll mid = (low + high);
-		if (mid * mid < v) low = mid + 1;
-		else high = mid;
-	}
-	return low;
-}
-
+// Baby-step Giant-step algorithm for discrete logarithm ( https://en.wikipedia.org/wiki/Baby-step_giant-step )
 struct BabyGiantStep {
-	vector<pair<ll, int>> smalls;
-	ll p; // Modulo (gcd(a, p) must be 1)
-	ll ias; // ias = (a^smalls.size())^-1 (mod p)
+	vector<ll> vals;
+	vector<int> inds;
+	ll p, ias;
 
-	// K should be the maximum power that is the answer to any query.
-	// If none is set, it is set to p-1.
-	void init(lll a, ll p, ll k = -1) {
+	// requires gcd(a, p) = 1. k should be sqrt(order(a))
+	// Complexity: O(k log(k)). Memory usage is O(k).
+	void init(lll a, ll p, ll k) {
 		this->p = p;
-		k = (k != -1 ? k : p);
 
-		ll s = highSqrt(k);
-		smalls.resize(s);
-		smalls[0] = {1, 0};
-		for (int i = 1; i < s; ++i) {
-			smalls[i] = {(a * smalls[i-1].first) % p, i};
+		lll mult = 1;
+		vector<pair<ll, int>> tmp (k);
+		for (int i = 0; i < k; ++i) {
+			tmp[i] = {mult, i};
+			mult = (mult * a) % p;
 		}
-		ias = modInv(smalls[s-1].first, p);
-		sort(smalls.begin(), smalls.end());
+		sort(tmp.begin(), tmp.end());
+
+		vals.resize(k);
+		inds.resize(k);
+		for (int i = 0; i < k; ++i) vals[i] = tmp[i].first;
+		for (int i = 0; i < k; ++i) inds[i] = tmp[i].second;
+		ias = modInv(mult, p);
 	}
 
-	// If exists i <= mx such that a^i = v, returns
-	// minimum such i. Otherwise returns -1.
-	ll ask(ll v, ll mx = INF) {
-		lll tmp = 1; // Loop large step, find matching small step
-		for (ll bi = 0; bi <= mx; bi += smalls.size()) {
-			ll tar = (v * tmp) % p;
-			tmp = (tmp * ias) % p;
-			int j = bins(smalls, {tar, smalls.size()});
-			if ((j != -1) && (bi + j <= mx)) return bi + j;
+	// If exists i <= mx such that a^i = v, returns minimum such i. Otherwise returns -1.
+	// Complexity: O(max(mx, i) log(k) / k) where i is the found index.
+	ll ask(lll b, ll mx = INF) {
+		for (ll bi = 0; bi <= mx;) {
+			int j = bins(vals, b);
+			if ((j != -1) && (vals[j] == b)) {
+				ll res = bi + inds[j];
+				if (res <= mx) return res;
+			}
+			b = (b * ias) % p; // Giant step
+			bi += smalls.size(); // Update base ind
 		}
 		return -1;
 	}
 }:
 
 // Optimized version of adleman-manders-miller root extraction ( https://arxiv.org/pdf/1111.4877.pdf )
-// Finds solution x to x^r = b (mod q)
-// Preconditions: q > 2
+// Finds solution x to x^r = b (mod q). If none exists, returns -1.
+// Preconditions: r and q are prime
+// Complexity: O(log(q) q^(1/4))
+// More accurately:
+// 	If r^2 | (q-1):	O(log_r(q) log(r) sqrt(r))
+// 	Otherwise:	O(log(q))
 ll admanmil(ll r, ll b, ll q) {
-	if ((p-1) % r != 0) cout << "QAQ\n";
-	// Also assume we are a residue, and that r is prime.
+	if (q == 2) return b; // q-1 = 1 is annoying to deal with.
 
-	//    r^t * s = rt * s = p-1
+	//    r^t * s = p-1
 	// -> (b^(s))^(r^(t-1)) = 1 (mod p)
 	ll s = q-1;
 	ll t = 0;
@@ -104,7 +108,8 @@ ll admanmil(ll r, ll b, ll q) {
 		s /= r;
 		++t;
 	}
-	ll rt = (q-1) / s;
+	if (t == 0) return modPow(b, modInv(r, q-1), q); // Trivial case 1
+	if (modPow(b, (q-1)/r, q) != 1) return -1; // nonresidue
 
 	//    s | ra - 1
 	// -> ra = 1 (mod s)
@@ -116,14 +121,41 @@ ll admanmil(ll r, ll b, ll q) {
 	//    (roo^(s))^(r^(t-1)) != 1 (mod p)
 	// -> (roo^(s))^(i * r^(t-1)) = Ki for 0 <= i < r are the r solutions to x^r = 1 (mod p)
 	ll roo = 2;
-	while (modPow(roo, (q-1)/r, q) != 1) roo = (random() % (q-2) + 2);
+	while (modPow(roo, (q-1)/r, q) == 1) roo = (random() % (q-2) + 2);
 	
-	// TODO rest
+	BabyGiantStep ks; // For finding the correct Ki
+	ks.init(modPow(roo, (q-1)/r, q), sqrt(r)); // O(log(r) sqrt(r))
+
+	// Invariant res^r = base * b
+	// Invariant base^(r^(t-i+1)) = 1
+	// -> Loop runs at most t-1 steps.
+	ll res = modPow(b, a, q);
+	ll base = modPow(b, r*a-1, q);
+	ll rp = 1;
+	for (int i = 2; base != 1; ++i) {
+		ll j = (r - ks.ask(base)) % r; // O(log(r) sqrt(r))
+		//    base^(r^(t-i)) * (roo^(s*j))^(r^(t-1)) = 1
+		// -> (base * roo^(s*j*r^(i-1)))^(r^(t-i)) = 1
+		
+		// set base <- base * roo^(s*j * r^(i-1)) and
+		//     res  <- res  * roo^(s*j * r^(i-2))
+		// maintaining the invariant
+
+		ll pw = (s*j) % (q-1);
+		res = res * modPow(roo, (pw*rp) % (q-1), q) % q;
+		rp = (rp * r) % (q-1);
+		base = base * modPow(roo, (pw*rp) % (q-1), q) % q;
+	}
+	//    base = 1
+	// -> res^r = b
+	return res;
 }
 
 
 int main() {
 	ll r, b, p;
 	cin >> r >> b >> p;
-	cout << admanmil(r, b, p) << '\n';
+	ll res = admanmil(r, b, p);
+	cout << res << '\n';
+	if (res != -1) cout << modPow(res, r, p) << '\n' << b << '\n';
 }
