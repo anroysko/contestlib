@@ -2,33 +2,16 @@
 #include <vector>
 #include <random>
 #include <utility>
+#include <algorithm>
 using namespace std;
 typedef long long ll;
 typedef __int128 lll;
 
-void sieve(int n, vector<int>& primes, vector<int>& div_ind) {
-	primes.reserve(n+1);
-	div_ind.resize(n+1);
-	for (int i = 0; i <= n; ++i) div_ind[i] = -1;
-	for (int i = 2; i <= n; ++i) {
-		if (div_ind[i] == -1) {
-			div_ind[i] = primes.size();
-			primes.push_back(i);
-		}
-		for (int j = 0; j <= div_ind[i]; ++j) {
-			int t = primes[j] * i;
-			if (t > n) break;
-			div_ind[t] = j;
-		}
-	}
-}
-
-
-lll modPow(lll w, lll u, lll val) {
-	if (u & 1) return (w * modPow(w, u-1, val)) % val;
-	if (u == 0) return 1;
-	lll sub = modPow(w, u>>1, val);
-	return (sub * sub) % val;
+lll modPow(lll a, lll b, lll c) {
+	if (b & 1) return (a * modPow(a, b-1, c)) % c;
+	if (b == 0) return 1;
+	lll sub = modPow(a, b>>1, c);
+	return (sub * sub) % c;
 }
 
 bool isWitness(lll w, lll even, lll odd, lll val) {
@@ -63,97 +46,74 @@ bool isPrime(ll val) {
 	return 1;
 }
 
-// Calculates largest x such that x*x <= v
-// Time Complexity: O(log(v))
-// Preconditions: x < 2^31
-ll lowerSqrt(ll v) {
-	ll x = 0;
-	ll xx = 0;
-	for (int j = 30; j >= 0; --j) {
-		ll nxx = (xx) + (x<<(j+1)) + ((ll)1 << (2*j));
-		if (nxx <= v) {
-			xx = nxx;
-			x |= (1<<j);
-		}
-	}
-	return x;
-}
-
-ll gcd(ll a, ll b) {
-	if (b == 0) return a;
-	return gcd(b, a % b);
-}
-
-// find x such that x | v.
-// Time Complexity: expected O(sqrt(v) * log(v))
-// Preconditions: v % 2 != 0, there is no x such that x^k = v for k > 1, v is not prime
+// find 1 < x < v such that x | v.
+// Has the optimizations of moving only one pointer,
+// and not taking gcd after every move
+// Time Complexity: expected O(sqrt(x)), worst case O(v^(1/4)) for any factor
+// Preconditions: v is not prime
 ll pollardRho(ll v) {
 	for (int c = 1;; ++c) {
-		ll x = 1;
-		ll y = ((lll)x * x + 1);
-		while(true) {
-			ll g = gcd(abs(x-y), v);
-			if (g != 1) {
-				if (g == v) break;
-				else return g;
+		ll x = (rand() + rand() * (ll)1e9) % v;
+		ll y = x;
+		ll ph = 1;
+		int len = 7;
+		for (int i = 0;; ++i) {
+			y = ((lll)y * y + c) % v;
+			ph = ((lll)ph * (abs(x-y))) % v;
+			if ((i & 15) == 0) {
+				ll g = __gcd(ph, v);
+				if (g != 1) {
+					if (g == v) break;
+					else return g;
+				}
+				ph = 1;
+				if ((i & len) == 0) {
+					x = y;
+					len = 2*len+1;
+				}
 			}
-			x = ((lll)x * x + c) % v;
-			y = ((lll)y * y + c) % v;
-			y = ((lll)y * y + c) % v;
 		}
 	}
 }
 
 // Factor v into pairs pi, xi, such that v = \prod pi^xi
-// Time Complexity: O(cuberoot(v))
-// Preconditions: primes must contain all primes <= cuberoot(v)
+// Time Complexity: O(v^(1/4) * \sum_i xi)
 // Returns: vector of pairs {pi, xi}
-vector<pair<ll, int>> factor(ll v, const vector<int>& primes) {
-	vector<pair<ll, int>> res;
-	for (int j = 0; j < primes.size(); ++j) {
-		int cou = 0;
-		while(true) {
-			ll rem = v / primes[j];
-			if (rem * primes[j] == v) {
-				++cou;
-				v = rem;
-			} else {
-				break;
-			}
+// This should only be used for large integers. Use sieve for factoring ones up to ~1e7
+vector<pair<ll, int>> factor(ll v) {
+	if (v <= 1) return {};
+	vector<ll> ps; // Primes that divide v
+	vector<ll> fl = {v}; // List to factor
+	while(! fl.empty()) {
+		v = fl.back();
+		fl.pop_back();
+		if (isPrime(v)) ps.push_back(v);
+		else {
+			ll d = pollardRho(v);
+			fl.push_back(v / d);
+			fl.push_back(d);
 		}
-		if (cou) res.push_back({primes[j], cou});
 	}
+	sort(ps.begin(), ps.end());
 
-	if (v != 1) {
-		if (isPrime(v)) {
-			res.push_back({v, 1});
+	vector<pair<ll, int>> res;
+	for (int i = 0; i < ps.size(); ++i) {
+		if ((i > 0) && (ps[i-1] == ps[i])) {
+			++res.back().second;
 		} else {
-			ll ls = lowerSqrt(v);
-			if (ls * ls == v) {
-				res.push_back({ls, 2});
-			} else {
-				ll p = pollardRho(v);
-				ll q = v / p;
-				res.push_back({min(p, q), 1});
-				res.push_back({max(p, q), 1});
-			}
+			res.push_back({ps[i], 1});
 		}
 	}
 	return res;
 }
 
 int main() {
-	const int N = 10 + (int)1e6;
-	vector<int> primes;
-	vector<int> div_ind;
-	sieve(N, primes, div_ind);
-
 	ll val1 = (ll)1e8 + 7;
 	ll val2 = (ll)1e9 + 7;
 	ll val3 = 2*2*3*7*13*41;
-	auto res1 = factor(val1 * val1, primes);
-	auto res2 = factor(val1 * val2, primes);
-	auto res3 = factor(val1 * val3, primes);
+	auto res1 = factor(val1 * val1);
+	auto res2 = factor(val1 * val2);
+	auto res3 = factor(val1 * val3);
 	// Should print
 	// (100000007 2),
 	// (100000007 1),(1000000007 1),

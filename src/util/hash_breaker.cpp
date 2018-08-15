@@ -2,9 +2,14 @@
 #include <utility>
 #include <vector>
 #include <algorithm>
+
+#include <random> // random
+#include <stdlib.h> // srand
+
 using namespace std;
 typedef long long ll;
 typedef __int128 lll;
+const pair<vector<int>, vector<int>> fail = {{},{}};
 
 // ***
 // Different methods for breaking rolling hashes.
@@ -73,6 +78,7 @@ pair<vector<int>, vector<int>> birthdayAttack(int n, const vector<int>& char_val
 			}
 		}
 		steps <<= 1;
+		if (steps >> 20) return fail;
 	}
 }
 
@@ -135,7 +141,7 @@ pair<vector<int>, vector<int>> treeAttack(int n, const vector<int>& char_vals, l
 		}
 	}
 	// We failed :(
-	return {{},{}};
+	return fail;
 }
 // Does a multi-tree attack
 // Same as a single-tree attack, but calculates multiple values for each node.
@@ -153,7 +159,7 @@ pair<vector<int>, vector<int>> multiTreeAttack(int n, const vector<int>& char_va
 			diffs.push_back({val, {char_vals[a], char_vals[b]}});
 		}
 	}
-
+	
 	// Remove duplicates
 	sort(diffs.begin(), diffs.end());
 	int ds = diffs.size();
@@ -279,10 +285,101 @@ pair<vector<int>, vector<int>> multiTreeAttack(int n, const vector<int>& char_va
 	}
 }
 
+pair<vector<int>, vector<int>> multiHash(int n, const vector<int>& char_vals, const vector<ll>& mults, const vector<ll>& mods) {
+	auto sub = birthdayAttack(6, char_vals, mults[0], mods[0]);
+	if (sub == fail) return fail;
+
+	for (int i = 1; i < mults.size(); ++i) {
+		int ps = sub.first.size();
+		int v1 = rollHash(sub.first, mults[i], mods[i]);
+		int v2 = rollHash(sub.second, mults[i], mods[i]);
+
+		ll multpow = 1;
+		for (int j = 0; j < ps; ++j) multpow = (multpow * mults[i]) % mods[i];
+
+		if (v1 == v2) continue;
+
+		int S = 20;
+
+		auto sub2 = birthdayAttack(S, {v1, v2}, multpow, mods[i]);
+		if (sub2 == fail) return fail;
+
+		pair<vector<int>, vector<int>> nxt;
+		nxt.first.resize(S * ps);
+		nxt.second.resize(S * ps);
+		for (int s = 0; s < S; ++s) {
+			for (int j = 0; j < ps; ++j) {
+				nxt.first[j+s*ps] = (sub2.first[s] == v1 ? sub.first[j] : sub.second[j]);
+				nxt.second[j+s*ps] = (sub2.second[s] == v1 ? sub.first[j] : sub.second[j]);
+			}
+		}
+		sub = nxt;
+	}
+	return sub;
+}
+
+inline bool pr (int n) {
+    int i = 2;
+    while (i * i <= n) {
+        if (n % i == 0) return false;
+        i++;
+    }
+    return true;
+}
+
+inline int np (int n) {
+    while (!pr(n)) n++;
+    return n;
+}
 
 
 int main() {
+	vector<int> alphabet(26);
+	for (int i = 0; i < 26; ++i) alphabet[i] = 'a' + i;
+	
+	int n, s;
+	cin >> n >> s;
 
+	while(true) {
+		vector<ll> mults(n);
+		vector<ll> mods(n);
+		for (int i = 0; i < n; ++i) {
+			srand(s + i);
+			mults[i] = np(rand());
+			mods[i] = np(rand());
+		}
+
+		cerr << s << ' ';
+		if (s % 10 == 0) cerr << '\n';
+
+		auto sub = multiHash(5 * (int)1e5, alphabet, mults, mods);
+		if (sub != fail) {
+			cerr << s << '\n';
+			for (auto it : sub.first) cout << (char)it;
+			for (auto it : sub.second) cout << (char)it;
+			// for (int i = (int)sub.second.size()-1; i >= 0; --i) cout << (char)sub.second[i]; cout << '\n';
+			
+			for (int i = 0; i < n; ++i) {
+				cerr << rollHash(sub.first, mults[i], mods[i]) << ' ';
+				cerr << rollHash(sub.second, mults[i], mods[i]) << '\n';
+			}
+			cerr << sub.first.size() << '\n';
+			break;
+		}
+		++s;
+	}
+
+	/*
+	ll mult1, mod1;
+	cin >> mult1 >> mod1;
+	
+	auto sub = birthdayAttack(10, alphabet, mult1, mod1);
+	for (auto it : sub.first) cout << (char)it; cout << '\n';
+	for (auto it : sub.second) cout << (char)it; cout << '\n';
+	for (int i = 9; i >= 0; --i) cout << (char)sub.second[i]; cout << '\n';
+	cout << rollHash(sub.first, mult1, mod1) << ' ' << rollHash(sub.second, mult1, mod1) << '\n';
+	*/
+	/*
 	ll mult1 = 7;
 	ll mod1 = 131;
 	ll mult2 = 1113111;
@@ -310,9 +407,12 @@ int main() {
 	for (auto it : sub.first) cout << (char)it; cout << '\n';
 	for (auto it : sub.second) cout << (char)it; cout << '\n';
 	cout << rollHash(sub.first, mult3, mod3) << ' ' << rollHash(sub.second, mult3, mod3) << '\n';
-	
-	sub = multiTreeAttack(1<<6, alphabet, mult4, mod4);
+	*/
+
+	/*
+	sub = multiTreeAttack(1<<18, alphabet, mult4, mod4);
 	for (auto it : sub.first) cout << (char)it; cout << '\n';
 	for (auto it : sub.second) cout << (char)it; cout << '\n';
 	cout << rollHash(sub.first, mult4, mod4) << ' ' << rollHash(sub.second, mult4, mod4) << '\n';
+	*/
 }

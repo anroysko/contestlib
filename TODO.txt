@@ -1,7 +1,11 @@
-https://codeforces.com/blog/entry/58311
+https://en.wikipedia.org/wiki/Integer_relation_algorithm
 
-https://arxiv.org/pdf/1111.4877.pdf
+https://en.wikipedia.org/wiki/Index_calculus_algorithm
 
 https://gist.github.com/hellman/49510790103d96a8d5259e578ffc2579
 
 Lattice reduction for hash collision finding
+
+http://codeforces.com/blog/entry/16967
+
+http://www.cs.princeton.edu/research/techreps/TR-597-99

@@ -32,8 +32,8 @@ struct Montgomery {
 	inline int mult(int a, int b) {
 		ll t = (ll)a * b;
 		ll tmc = ((t & (r-1)) * mc) & (r-1);
-		ll u = (t + (m * tmc)) >> j;
-		return (u >= m ? u-m : u);
+		ll u = (t + (m * tmc)) >> j; // Exact division!
+		return (u >= m ? u-m : u); // u < 2m
 	}
 	inline int transform(int v) {
 		return mult(v, rr);

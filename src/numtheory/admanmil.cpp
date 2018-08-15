@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <random>
 #include <cmath>
+#include <assert.h>
 using namespace std;
 typedef long long ll;
 typedef __int128 lll;
@@ -14,9 +15,9 @@ const ll INF = 1e18;
 template<class T>
 int bins(const vector<T>& vec, T v) {
 	int low = -1;
-	int high = vec.size();
-	while(true) {
-		int mid = (low + high) >> 1;
+	int high = (int)vec.size()-1;
+	while(low < high) {
+		int mid = (low + high + 1) >> 1;
 		if (vec[mid] <= v) {
 			low = mid;
 		} else {
@@ -28,6 +29,8 @@ int bins(const vector<T>& vec, T v) {
 
 // Calculates a^b mod c in log(b) time.
 ll modPow(ll a, ll b, ll c) {
+	assert(b >= 0);
+
 	if (b & 1) return ((lll)a * modPow(a, b^1, c)) % c;
 	if (b == 0) return 1 % c;
 	return modPow(((lll)a*a)%c, b>>1, c);
@@ -38,11 +41,12 @@ pair<ll, pair<lll, lll>> extEuc(ll a, ll b) {
 	if (b == 0) return {a, {1, 0}};
 	ll k = a / b;
 	auto sub = extEuc(b, a-k*b);
-	return {sub.first, {sub.second, sub.first - k*sub.second}};
+	return {sub.first, {sub.second.second, sub.second.first - k*sub.second.second}};
 }
 
 // returns x such that ax = 1 (mod b). Requires gcd(a, b) = 1.
 ll modInv(ll a, ll b) {
+	if (b == 1) return 1; // Annoying special case needed for admanmil
 	auto sub = extEuc(a, b); // ax + by = 1 -> ax = 1 (b)
 	ll res = sub.second.first % b;
 	return (res < 0 ? res + b : res);
@@ -56,7 +60,7 @@ struct BabyGiantStep {
 
 	// requires gcd(a, p) = 1. k should be sqrt(order(a))
 	// Complexity: O(k log(k)). Memory usage is O(k).
-	void init(lll a, ll p, ll k) {
+	void init(ll a, ll p, ll k) {
 		this->p = p;
 
 		lll mult = 1;
@@ -76,27 +80,24 @@ struct BabyGiantStep {
 
 	// If exists i <= mx such that a^i = v, returns minimum such i. Otherwise returns -1.
 	// Complexity: O(max(mx, i) log(k) / k) where i is the found index.
-	ll ask(lll b, ll mx = INF) {
+	ll ask(ll b, ll mx = INF) {
 		for (ll bi = 0; bi <= mx;) {
 			int j = bins(vals, b);
 			if ((j != -1) && (vals[j] == b)) {
 				ll res = bi + inds[j];
 				if (res <= mx) return res;
 			}
-			b = (b * ias) % p; // Giant step
-			bi += smalls.size(); // Update base ind
+			b = ((lll)b * ias) % p; // Giant step
+			bi += vals.size(); // Update base ind
 		}
 		return -1;
 	}
-}:
+};
 
 // Optimized version of adleman-manders-miller root extraction ( https://arxiv.org/pdf/1111.4877.pdf )
 // Finds solution x to x^r = b (mod q). If none exists, returns -1.
 // Preconditions: r and q are prime
-// Complexity: O(log(q) q^(1/4))
-// More accurately:
-// 	If r^2 | (q-1):	O(log_r(q) log(r) sqrt(r))
-// 	Otherwise:	O(log(q))
+// Complexity: O(log(q) min(q^(1/4), log_r(q) sqrt(r))
 ll admanmil(ll r, ll b, ll q) {
 	if (q == 2) return b; // q-1 = 1 is annoying to deal with.
 
@@ -122,9 +123,9 @@ ll admanmil(ll r, ll b, ll q) {
 	// -> (roo^(s))^(i * r^(t-1)) = Ki for 0 <= i < r are the r solutions to x^r = 1 (mod p)
 	ll roo = 2;
 	while (modPow(roo, (q-1)/r, q) == 1) roo = (random() % (q-2) + 2);
-	
+
 	BabyGiantStep ks; // For finding the correct Ki
-	ks.init(modPow(roo, (q-1)/r, q), sqrt(r)); // O(log(r) sqrt(r))
+	ks.init(modPow(roo, (q-1)/r, q), q, sqrt(r)); // O(log(r) sqrt(r))
 
 	// Invariant res^r = base * b
 	// Invariant base^(r^(t-i+1)) = 1
@@ -133,7 +134,8 @@ ll admanmil(ll r, ll b, ll q) {
 	ll base = modPow(b, r*a-1, q);
 	ll rp = 1;
 	for (int i = 2; base != 1; ++i) {
-		ll j = (r - ks.ask(base)) % r; // O(log(r) sqrt(r))
+		ll val = modPow(base, modPow(r, t-i, q-1), q);
+		ll j = (r - ks.ask(val)) % r; // O(log(r) sqrt(r))
 		//    base^(r^(t-i)) * (roo^(s*j))^(r^(t-1)) = 1
 		// -> (base * roo^(s*j*r^(i-1)))^(r^(t-i)) = 1
 		
@@ -142,9 +144,9 @@ ll admanmil(ll r, ll b, ll q) {
 		// maintaining the invariant
 
 		ll pw = (s*j) % (q-1);
-		res = res * modPow(roo, (pw*rp) % (q-1), q) % q;
+		res = (lll)res * modPow(roo, (pw*rp) % (q-1), q) % q;
 		rp = (rp * r) % (q-1);
-		base = base * modPow(roo, (pw*rp) % (q-1), q) % q;
+		base = (lll)base * modPow(roo, (pw*rp) % (q-1), q) % q;
 	}
 	//    base = 1
 	// -> res^r = b
@@ -157,5 +159,4 @@ int main() {
 	cin >> r >> b >> p;
 	ll res = admanmil(r, b, p);
 	cout << res << '\n';
-	if (res != -1) cout << modPow(res, r, p) << '\n' << b << '\n';
 }
