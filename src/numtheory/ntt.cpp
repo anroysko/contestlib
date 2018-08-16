@@ -4,9 +4,9 @@ using namespace std;
 typedef __int128 lll;
 typedef long long ll;
 
-// Five primes p all of which have 2^21 | p-1. i998244353 is the one most commonly seen in NTT-problems
+// Three primes p all of which have 2^21 | p-1. 998244353 is the one most commonly seen in NTT-problems
 // Additionally, 3 is a generator for all of them.
-// To calculate in arbitrary modulo, first calculate in 1-3 moduloes, and then use CRT.
+// To calculate in arbitrary modulo, first calculate in 1-3 moduloes, and then use CRT (chinese remainder theorem).
 // If inputs are mod-p, and the array is of size n, the output integers are at most np^2, so for
 // moduloes <= 1e9 three integers should always be enough.
 constexpr int ntt_primes[3] = {998244353, 1004535809, 985661441};
