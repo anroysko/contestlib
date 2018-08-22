@@ -7,7 +7,7 @@ typedef long long ll;
 
 // Must be N*N*V < 2e19, to avoid overflows.
 // typedef __int128 ll for larger cases.
-const int N = 1e5; // Node count
+const int N = 1e5; // Node count (used only for INF)
 const int V = 1e9; // Max edge cost
 const ll INF = (ll)N*V + 1;
 

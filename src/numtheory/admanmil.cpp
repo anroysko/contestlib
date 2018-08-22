@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <random>
 #include <cmath>
-#include <assert.h>
 using namespace std;
 typedef long long ll;
 typedef __int128 lll;
@@ -29,8 +28,6 @@ int bins(const vector<T>& vec, T v) {
 
 // Calculates a^b mod c in log(b) time.
 ll modPow(ll a, ll b, ll c) {
-	assert(b >= 0);
-
 	if (b & 1) return ((lll)a * modPow(a, b^1, c)) % c;
 	if (b == 0) return 1 % c;
 	return modPow(((lll)a*a)%c, b>>1, c);
