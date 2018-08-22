@@ -2,38 +2,37 @@
 #include <iostream>
 using namespace std;
 
-// Pairing Heap
+// Pairing Heap (https://gcc.gnu.org/onlinedocs/libstdc++/ext/pb_ds/)
 // O(1) insert, join, O(log(n)) other operations.
 // Faster than regular priority queue for non-primitive types (string, vector), or if join is required.
+// Other advantages include being able to iterate through it, and having smallest element first by default.
 template<class T>
-using pairing_heap = __gnu_pbds::priority_queue<T, greater<T>, __gnu_pbds::pairing_heap_tag>;
-
-// thin heap (better fib heap)
-// O(1) insert, join, reduce_key, O(log(n)) pop.
-// Speeds up djikstra if m = O(n^2) (maybe?)
-template<class T>
-using fib_heap = __gnu_pbds::priority_queue<T, greater<T>, __gnu_pbds::thin_heap_tag>;
+using pair_heap = __gnu_pbds::priority_queue<T, greater<T>, __gnu_pbds::pairing_heap_tag>;
 
 int main() {
 	int a, b, c;
 	cin >> a >> b >> c;
 	
-	fib_heap<int> que1;
-	fib_heap<int>::point_iterator it = que1.push(a);
+	pair_heap<int> que1;
+	pair_heap<int>::point_iterator it = que1.push(a);
 	que1.push(b);
 	cout << que1.top() << '\n';
-	que1.modify(it, c); // fast if c < previous value
+
+	// Can modify elements inside in O(log n) time
+	que1.modify(it, c);
 	cout << que1.top() << '\n';
 
 	int d, e;
 	cin >> d >> e;
 	
-	fib_heap<int> que2;
+	pair_heap<int> que2;
 	que2.push(d);
 	que2.push(e);
-	
+
+	// Supports joining in O(1) time	
 	que1.join(que2);
 
+	// Can be iterated (elements aren't in order though)
 	for (auto it : que1) cout << it << ' '; cout << '\n';	
 
 	while(! que1.empty()) {
