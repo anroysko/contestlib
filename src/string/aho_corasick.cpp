@@ -7,7 +7,7 @@ using namespace std;
 // Aho-corasick automaton for matching a string against multiple patterns
 struct AhoCora {
 	vector<int> pat_ind; // Index of pattern at this node (-1 if none)
-	vector<int> suf_link; // Suffix link to next one in automata
+	vector<int> suf_link; // Longest string in automata that is this one's true suffix
 	vector<int> pat_link; // Index of next pattern when following suffix links
 	vector<map<char, int>> conns; // Edges to children from this node
 
@@ -26,31 +26,37 @@ struct AhoCora {
 		if (it == conns[i].end()) return -1;
 		else return (*it).second;
 	}
-	// Set target of edge from node i, labeled with char c, and return it.
-	int set(int i, char c, int t) {
+
+	// Set target of edge from node i, labeled with char c
+	void set(int i, char c, int t) {
 		conns[i][c] = t;
-		return t;
+	}
+
+	// Extends the suffix by the given character
+	int extend(int i, char c) {
+		int res = -1;
+		while((i != -1) && (res == -1)) {
+			res = get(i, c);
+			i = suf_link[i];
+		}
+		if (res == -1) return 0;
+		else return res;
 	}
 
         // #################### USE ONLY THE FUNCTIONS BELOW ####################
-	
 	AhoCora() {
 		makeNode(); // make root
 	}
 
-	// Adds the string to the automata, and returns its index.
-	// If the string already exists, returns the existing's index.
+	// Adds the string to the automata
 	// Time complexity: O(|pat| log C)
 	int addPattern(const string& pat, int ind) {
 		int i = 0; // current node
 		for (char c : pat) {
-			int ni = get(i, c);
-			if (ni == -1) ni = set(i, c, makeNode());
-			i = ni;
+			if (get(i, c) == -1) set(i, c, makeNode());
+			i = get(i, c);
 		}
-		if (pat_ind[i] != -1) return pat_ind[i];
 		pat_ind[i] = ind;
-		return ind;
 	}
 
 	// Build suf_link and pat_link. Call after inserting all patterns, before matching
@@ -63,20 +69,9 @@ struct AhoCora {
 			for (auto pr : conns[i]) {
 				char c = pr.first;
 				int t = pr.second;
-
-				// Find suf_link
-				int w = suf_link[i]; // node of current suffix of i
-				while((w != -1) && (suf_link[t] == -1)) {
-					suf_link[t] = get(w, c);
-					w = suf_link[w];
-				}
-				if (suf_link[t] == -1) suf_link[t] = 0;
-
-				// Find pat_link
+				suf_link[t] = extend(suf_link[i], c);
 				if (pat_ind[suf_link[t]] != -1) pat_link[t] = suf_link[t];
 				else pat_link[t] = pat_link[suf_link[t]];
-
-				// Push to que
 				que.push_back(t);
 			}
 		}
@@ -85,21 +80,11 @@ struct AhoCora {
 	// Returns vector containing all matches {index, pattern},
 	// sorted increasingly by index, then decreasingly by length of pattern.
 	// Time complexity: O(|res| + |str| log C)
-	vector<pair<int, int>> getMatches(const string& str) {
+	vector<pair<int, int>> match(const string& str) {
 		vector<pair<int, int>> res;
 		int i = 0; // current node
 		for (int j = 0; j < str.size(); ++j) {
-			// Move the state
-			char c = str[j];
-			int ni = -1;
-			while((i != -1) && (ni == -1)) {
-				ni = get(i, c);
-				i = suf_link[i];
-			}
-			if (ni == -1) ni = 0;
-			i = ni;
-
-			// Find matches
+			i = extend(i, str[j]);
 			int w = i;
 			while(w != -1) {
 				if (pat_ind[w] != -1) res.push_back({j, pat_ind[w]});
@@ -126,7 +111,7 @@ int main() {
 	}
 	atm.buildLinks();
 
-	auto matches = atm.getMatches(str);
+	auto matches = atm.match(str);
 	for (auto pr : matches) cout << pr.first << ' ' << pr.second << ", "; cout << '\n';
 
 	// Example input:
