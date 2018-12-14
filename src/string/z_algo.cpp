@@ -9,16 +9,19 @@ using namespace std;
 vector<int> zAlgo(const vector<int>& v) {
 	int n = v.size();
 	vector<int> res(n, 0);
-	int l = -1; // l and r give interval such that r is maximized,
-	int r = -1; // l < i, and r = l + res[l].
+	int l = 0; // l and r give interval such that r is maximized,
+	int r = 0; // l < i, and r = l + res[l].
 	for (int i = 1; i < n; ++i) {
-		if (i < r) res[i] = min(res[i - l], r-i);
-		if (i + res[i] < r) continue;
-		while((i + res[i] < n) && (v[res[i]] == v[i + res[i]])) {
-			++res[i];
+		int t = i; // t = i + res[i]
+		if (i < r) t += min(res[i-l], r-i);
+		if (t >= r) {
+			while((t < n) && (v[t-i] == v[t])) {
+				++t;
+			}
+			l = i;
+			r = t;
 		}
-		l = i;
-		r = i+res[i];
+		res[i] = t - i;
 	}
 	return res;
 }
