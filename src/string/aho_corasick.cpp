@@ -39,8 +39,7 @@ struct AhoCora {
 			res = get(i, c);
 			i = suf_link[i];
 		}
-		if (res == -1) return 0;
-		else return res;
+		return max(res, 0); // root always works
 	}
 
         // #################### USE ONLY THE FUNCTIONS BELOW ####################
