@@ -10,7 +10,7 @@ void kmpSub(const string& str, const string& pat, vector<int>& aux, vector<int>&
 		char t = str[i - phase]; // extending char
 		while((c > -1) && (pat[c] != t)) c = aux[c];
 		res[i] = ++c;
-		if (c == pat.size()) c = aux[c];
+		if (c == pat.size()) c = aux[c]; // full match
 	}
 }
 
@@ -18,8 +18,8 @@ void kmpSub(const string& str, const string& pat, vector<int>& aux, vector<int>&
 vector<int> kmp(const string& str, const string& pat) {
 	vector<int> aux(pat.size()+1); // aux[i] := max_j : pat[0..j) = pat[i-j..i), and j < i
 	vector<int> res(str.size());   // res[i] := max_j : pat[0..j) = str(i-j..i], and j <= i+1
-	kmpSub(pat, pat, aux, aux, 1);
-	kmpSub(str, pat, aux, res, 0);
+	kmpSub(pat, pat, aux, aux, 1); // Create aux array for prefix function
+	kmpSub(str, pat, aux, res, 0); // Find result
 	return res;
 }
 
