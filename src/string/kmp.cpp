@@ -3,14 +3,14 @@
 using namespace std;
 
 // Subroutine for KMP
-void kmpSub(const string& str, const string& pat, vector<int>& aux, vector<int>& res, int p) {
+void kmpSub(const string& str, const string& pat, vector<int>& aux, vector<int>& res, bool phase) {
+	int c = (phase ? -1 : str[0] == pat[0]); // current value
+	res[0] = c;
 	for (int i = 1; i < res.size(); ++i) {
-		res[i] = res[i-1];
-		if (res[i] == pat.size()) res[i] = aux[res[i]];
-		while((res[i] > -1) && (pat[res[i]] != str[i-p])) {
-			res[i] = aux[res[i]];
-		}
-		++res[i];
+		char t = str[i - phase]; // extending char
+		while((c > -1) && (pat[c] != t)) c = aux[c];
+		res[i] = ++c;
+		if (c == pat.size()) c = aux[c];
 	}
 }
 
@@ -18,8 +18,8 @@ void kmpSub(const string& str, const string& pat, vector<int>& aux, vector<int>&
 vector<int> kmp(const string& str, const string& pat) {
 	int n = str.size();
 	int m = pat.size();
-	vector<int> aux(m+1, -1);
-	vector<int> res(n, str[0] == pat[0]);
+	vector<int> aux(m+1); // aux[i] := max_j : pat[0..j) = pat[i-j..i), and j < i
+	vector<int> res(n);   // res[i] := max_j : pat[0..j) = str(i-j..i], and j <= i+1
 	kmpSub(pat, pat, aux, aux, 1);
 	kmpSub(str, pat, aux, res, 0);
 	return res;
