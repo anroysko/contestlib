@@ -3,27 +3,23 @@
 using namespace std;
 
 // Builds the z-array for the vector v
-// for i > 0, res[i] is the maximum value such that v[0, res[i]) = v[i, i+res[i])
+// for i > 0, z[i] is the maximum value such that v[0, z[i]) = v[i, i+z[i])
 // note the half open interval.
 // time complexity: O(n)
 vector<int> zAlgo(const vector<int>& v) {
 	int n = v.size();
-	vector<int> res(n, 0);
+	vector<int> z(n, 0);
 	int l = 0; // l and r give interval such that r is maximized,
-	int r = 0; // l < i, and r = l + res[l].
+	int r = 0; // l < i, and r = l + z[l].
 	for (int i = 1; i < n; ++i) {
-		int t = i; // t = i + res[i]
-		if (i < r) t += min(res[i-l], r-i);
-		if (t >= r) {
-			while((t < n) && (v[t-i] == v[t])) {
-				++t;
-			}
+		z[i] = max(0, min(z[i-l], r-i));
+		while((i+z[i] < n) && (v[z[i]] == v[i+z[i]])) ++z[i];
+		if (i+z[i] > r) {
 			l = i;
-			r = t;
+			r = i+z[i];
 		}
-		res[i] = t - i;
 	}
-	return res;
+	return z;
 }
 
 int main() {
