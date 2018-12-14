@@ -49,7 +49,7 @@ struct AhoCora {
 
 	// Adds the string to the automata
 	// Time complexity: O(|pat| log C)
-	int addPattern(const string& pat, int ind) {
+	void addPattern(const string& pat, int ind) {
 		int i = 0; // current node
 		for (char c : pat) {
 			if (get(i, c) == -1) set(i, c, makeNode());
