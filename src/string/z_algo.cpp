@@ -11,15 +11,12 @@ vector<int> zAlgo(const vector<int>& v) {
 	vector<int> res(n, 0);
 	int l = -1; // l and r give interval such that r is maximized,
 	int r = -1; // l < i, and r = l + res[l].
-
 	for (int i = 1; i < n; ++i) {
 		if (i < r) res[i] = min(res[i - l], r-i);
 		if (i + res[i] < r) continue;
-
 		while((i + res[i] < n) && (v[res[i]] == v[i + res[i]])) {
 			++res[i];
 		}
-
 		l = i;
 		r = i+res[i];
 	}
