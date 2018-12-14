@@ -34,7 +34,9 @@ int main() {
 	for (int i = 0; i < str.size(); ++i) cout << res[i] << ' '; cout << '\n';
 	
 	// Example input:
-	// TODO
+	// abaabbabaaba
+	// babaa
+
 	// Example output:
-	// TODO
+	// 0 1 2 0 1 1 2 3 4 5 1 2 
 }
