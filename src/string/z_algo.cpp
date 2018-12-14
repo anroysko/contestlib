@@ -14,7 +14,9 @@ vector<int> zAlgo(const vector<int>& v) {
 
 	for (int i = 1; i < n; ++i) {
 		if (i <= r) res[i] = min(res[i - l], r-i);
-		for (; (r <= i+res[i]) && (i+res[i] < n); ++res[i]) {
+		for (;; ++res[i]) {
+			if (r > i+res[i]) break;
+			if (i + res[i] >= n) break;
 			if (v[res[i]] != v[i + res[i]]) break;
 			l = i;
 			r = i+res[i];
