@@ -16,10 +16,8 @@ void kmpSub(const string& str, const string& pat, vector<int>& aux, vector<int>&
 
 // Knuth-morris-pratt pattern matching
 vector<int> kmp(const string& str, const string& pat) {
-	int n = str.size();
-	int m = pat.size();
-	vector<int> aux(m+1); // aux[i] := max_j : pat[0..j) = pat[i-j..i), and j < i
-	vector<int> res(n);   // res[i] := max_j : pat[0..j) = str(i-j..i], and j <= i+1
+	vector<int> aux(pat.size()+1); // aux[i] := max_j : pat[0..j) = pat[i-j..i), and j < i
+	vector<int> res(str.size());   // res[i] := max_j : pat[0..j) = str(i-j..i], and j <= i+1
 	kmpSub(pat, pat, aux, aux, 1);
 	kmpSub(str, pat, aux, res, 0);
 	return res;
