@@ -37,8 +37,7 @@ struct Dinic {
 	int flow_src; // source
 	int flow_tar; // sink
 
-	// Update dist (building level graph)
-	void calcDists() {
+	bool calcDists() {
 		for (int i = 0; i < dist.size(); ++i) dist[i] = dist.size();
 		dist[flow_tar] = 0;
 		vector<int> que = {flow_tar};
@@ -53,8 +52,8 @@ struct Dinic {
 				}
 			}
 		}
+		return dist[flow_src] < dist.size(); // Return true if sink is reachable from source
 	}
-	// DFS-push flow in the level graph, however at most mx.
 	ll dfsFlow(int i, ll mx) {
 		if (i == flow_tar || mx == 0) return mx;
 		ll res = 0; // Amount of flow we end up pushing
@@ -77,28 +76,18 @@ struct Dinic {
 		conns.resize(n);
 		dist.resize(n);
 	}
-
-	// Adds the given edge, and returns its index
-	// Edges are directed. To add an undirected edge, call as
-	// addEdge(src, tar, 2*cap, cap) or add two edges.
 	int addEdge(int src, int tar, ll cap, ll flow = 0) {
 		int i = edges.size();
 		edges.emplace_back(src, tar, cap, flow);
 		conns[src].push_back(i);
 		conns[tar].push_back(i);
-		return i;
+		return i; // Returns index of added edge
 	}
-
 	ll pushFlow() {
 		ll res = 0;
-		while(true) {
-			calcDists();
-			if (dist[flow_src] == dist.size()) return res;
-			res += dfsFlow(flow_src, 8*(ll)1e18);
-		}
+		while(calcDists()) res += dfsFlow(flow_src, 8*(ll)1e18);
 		return res;
 	}
-
 	ll getEdgeFlow(int edge_id) const {
 		return edges[edge_id].flow;
 	}
