@@ -7,8 +7,8 @@ typedef long long ll;
 // Source must be node 0, sink must be node n-1
 // All edges are directed
 // O(V^2 E) in general
-// O(min(V^{2/3}, sqrt(E)) E) in graphs with unit capacities
-// O(sqrt(V) E) in unit networks (e.g. bipartite matching)
+// O(min(V^{2/3}, sqrt{E}) E) in graphs with unit capacities
+// O(sqrt{V} E) in unit networks (e.g. bipartite matching)
 struct Dinic {
 	private:
 	struct Edge {
@@ -17,8 +17,8 @@ struct Dinic {
 		const ll cap;
 		ll flow;
 
-		Edge(int a, int b, ll c) : src(a), tar(b), cap(c) {
-			flow = 0;
+		Edge(int a, int b, ll c, ll f = 0) : src(a), tar(b), cap(c) {
+			flow = f;
 		}
 	};
 	static int getOth(int i, const Edge& ed) {
@@ -36,12 +36,10 @@ struct Dinic {
 	vector<int> dist; // Distance to sink
 	int flow_src; // source
 	int flow_tar; // sink
-	int n;
-
 
 	// Update dist (building level graph)
 	void calcDists() {
-		for (int i = 0; i < n; ++i) dist[i] = n;
+		for (int i = 0; i < dist.size(); ++i) dist[i] = dist.size();
 		dist[flow_tar] = 0;
 		vector<int> que = {flow_tar};
 		for (int j = 0; j < que.size(); ++j) {
@@ -72,13 +70,8 @@ struct Dinic {
 		return res;
 	}
 
-	// ######################################################################
-	// #################### Use only the functions below ####################
-	// ######################################################################
 	public:
-
-	void init(int nodes, int src, int sink) {
-		n = nodes;
+	void init(int n, int src, int sink) {
 		flow_src = src;
 		flow_tar = sink;
 		conns.resize(n);
@@ -87,58 +80,49 @@ struct Dinic {
 
 	// Adds the given edge, and returns its index
 	// Edges are directed. To add an undirected edge, call as
-	// addEdge(src, tar, 2*cap, cap)
+	// addEdge(src, tar, 2*cap, cap) or add two edges.
 	int addEdge(int src, int tar, ll cap, ll flow = 0) {
 		int i = edges.size();
-		edges.emplace_back(src, tar, cap);
-		edges.back().flow = flow;
+		edges.emplace_back(src, tar, cap, flow);
 		conns[src].push_back(i);
 		conns[tar].push_back(i);
 		return i;
 	}
 
-	// Push flow. Returns how much flow could be pushed
 	ll pushFlow() {
 		ll res = 0;
 		while(true) {
 			calcDists();
-			if (dist[flow_src] == n) return res;
+			if (dist[flow_src] == dist.size()) return res;
 			res += dfsFlow(flow_src, 8*(ll)1e18);
 		}
 		return res;
 	}
 
-	ll getFlow(int edge_id) const {
+	ll getEdgeFlow(int edge_id) const {
 		return edges[edge_id].flow;
 	}
 };
 
+// Example usage
 int main() {
-	// Example usage, with undirected edges.
+	ios_base::sync_with_stdio(false);
+	cin.tie(0);
+
 	int n, m;
 	cin >> n >> m;
-	int src, sink;
-	cin >> src >> sink;
-	--src; --sink;
 
-	vector<ll> caps(m);
 	Dinic dinic;
-	dinic.init(n, src, sink);
+	dinic.init(n, 0, n-1);
 
 	for (int i = 0; i < m; ++i) {
 		int a, b;
 		ll c;
 		cin >> a >> b >> c;
 		--a; --b;
-		dinic.addEdge(a, b, 2*c, c);
-		caps[i] = c;
+		dinic.addEdge(a, b, c);
 	}
 	
 	ll flow = dinic.pushFlow();
-	cout << "Flow: " << flow << '\n';
-	cout << "Edges: ";
-	for (int i = 0; i < m; ++i) {
-		cout << dinic.getFlow(i) - caps[i] << ' '; // negative if flow from tar to src
-	}
-	cout << '\n';
+	cout << flow << '\n';
 }
