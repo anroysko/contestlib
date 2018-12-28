@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <utility>
 using namespace std;
 typedef long long ll;
 
@@ -90,28 +91,59 @@ struct Dinic {
 	}
 };
 
+struct BipMatcher {
+	Dinic solver;
+	vector<bool> side;
+
+	void init(const vector<bool>& sid) {
+		side = sid;
+		int n = side.size();
+		solver.init(n+2, 0, n+1);
+		for (int i = 1; i <= n; ++i) {
+			if (side[i-1]) solver.addEdge(i, n+1, 1);
+			else solver.addEdge(0, i, 1);
+		}
+	}
+
+	void addEdge(int a, int b) {
+		if (side[a]) swap(a, b);
+		solver.addEdge(a+1, b+1, 1);
+	}
+
+	vector<pair<int, int>> getMaxMatching() {
+		solver.pushFlow();
+		vector<pair<int, int>> res;
+		for (int i = side.size(); i < solver.edges.size(); ++i) {
+			auto ed = solver.getEdge(i);
+			if (ed.flow > 0) {
+				res.push_back({ed.src-1, ed.tar-1});
+			}
+		}
+		return res;
+	}
+};
+
 // Example usage
 int main() {
 	int n, m;
 	cin >> n >> m;
-
-	Dinic dinic;
-	dinic.init(n, 0, n-1);
-
-	for (int i = 0; i < m; ++i) {
-		int a, b;
-		ll c;
-		cin >> a >> b >> c;
-		--a; --b;
-		dinic.addEdge(a, b, c);
+	vector<bool> side(n);
+	for (int i = 0; i < n; ++i) {
+		char c;
+		cin >> c;
+		side[i] = (c == 'L'); // L or R
 	}
 	
-	ll flow = dinic.pushFlow();
-	cout << "Total flow: " << flow << '\n';
-	cout << "Flow per edge: ";
+	BipMatcher matcher;
+	matcher.init(side);
 	for (int i = 0; i < m; ++i) {
-		auto ed = dinic.getEdge(i);
-		cout << dinic.getEdge(i).flow << ' ';
+		int a, b;
+		cin >> a >> b;
+		--a; --b;
+		matcher.addEdge(a, b);
 	}
-	cout << '\n';
+
+	auto res = matcher.getMaxMatching();
+	cout << "Number of pairs: " << res.size() << ", pairs:\n";
+	for (auto pr : res) cout << pr.first << ' ' << pr.second << '\n';
 }
