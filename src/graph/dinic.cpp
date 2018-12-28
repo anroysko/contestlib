@@ -54,13 +54,12 @@ struct Dinic {
 		}
 		return dist[flow_src] < dist.size(); // Return true if sink is reachable from source
 	}
-	ll dfsFlow(int i, ll mx) {
+	ll dfsFlow(int i, ll mx = 8*(ll)1e18) {
 		if (i == flow_tar || mx == 0) return mx;
 		ll res = 0; // Amount of flow we end up pushing
 		for (int ei : conns[i]) {
 			int t = getOth(i, edges[ei]);
 			if (dist[t] != dist[i]-1) continue; // edge not in level graph
-			
 			ll cap = getCap(i, edges[ei]);
 			ll pc = dfsFlow(t, min(mx - res, cap));
 			push(i, edges[ei], pc);
@@ -68,7 +67,6 @@ struct Dinic {
 		}
 		return res;
 	}
-
 	public:
 	void init(int n, int src, int sink) {
 		flow_src = src;
@@ -85,7 +83,7 @@ struct Dinic {
 	}
 	ll pushFlow() {
 		ll res = 0;
-		while(calcDists()) res += dfsFlow(flow_src, 8*(ll)1e18);
+		while(calcDists()) res += dfsFlow(flow_src);
 		return res;
 	}
 	ll getEdgeFlow(int edge_id) const {
