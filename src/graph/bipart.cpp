@@ -121,6 +121,21 @@ struct BipMatcher {
 		}
 		return res;
 	}
+
+	vector<int> getMinVertexCover() {
+		solver.pushFlow();
+		solver.calcDists();
+		// See wikipedia page for könig's theorem for explanation of this algorithm
+		// Here it's inverted with respect to L and R
+		vector<int> k;
+		for (int i = 0; i < side.size(); ++i) {
+			bool z = (solver.dist[i+1] != solver.dist.size());
+			if (side[i] != z) {
+				k.push_back(i);
+			}
+		}
+		return k;
+	}
 };
 
 // Example usage
@@ -146,4 +161,8 @@ int main() {
 	auto res = matcher.getMaxMatching();
 	cout << "Number of pairs: " << res.size() << ", pairs:\n";
 	for (auto pr : res) cout << pr.first << ' ' << pr.second << '\n';
+
+	auto cov = matcher.getMinVertexCover();
+	cout << "Number of nodes: " << cov.size() << ", nodes:\n";
+	for (auto i : cov) cout << i << ' '; cout << '\n';
 }
