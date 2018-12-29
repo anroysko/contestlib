@@ -53,16 +53,22 @@ struct Hungarian {
 				// Update potentials
 				ll d = INF;
 				for (int j = 0; j < n; ++j) {
-					if (sa[j]) d = min(d, sa[j]);
-				}
-				for (auto i : que) lp[i] += d;
-				for (int j = 0; j < n; ++j) {
-					if (sa[j] == 0) rp[j] -= d;
-					else {
-						sa[j] -= d;
-						if (extend(j, sa, pre, que)) return;
+					if (sa[j]) {
+						// cout << "Offer for d: " << sa[j] << " from " << j << '\n';
+						d = min(d, sa[j]);
 					}
 				}
+				// cout << "Updating potentials with delta " << d << '\n';
+				bool found = false;
+				for (auto i : que) lp[i] += d;
+				for (int j = 0; j < n; ++j) {
+					if (sa[j]) {
+						sa[j] -= d;
+						if (! found) found |= extend(j, sa, pre, que);
+					} else rp[j] -= d;
+					// cout << "SA of " << j << ": " << sa[j] << '\n';
+				}
+				if (found) return;
 			}
 		}
 	}
@@ -78,6 +84,8 @@ struct Hungarian {
 	}
 	vector<int> solve() {
 		for (int i = 0; i < n; ++i) step();
+		// for (int i = 0; i < n; ++i) cout << lp[i] << ' '; cout << '\n';
+		// for (int i = 0; i < n; ++i) cout << rp[i] << ' '; cout << '\n';
 		return lm;
 	}
 };
@@ -97,8 +105,11 @@ int main() {
 
 	Hungarian hung;
 	hung.init(weights);
-	vector<int> res = hung.solve();
-	for (auto r : res) cout << r << ' '; cout << '\n';
+
+	vector<int> prs = hung.solve();
+	ll ans = 0;
+	for (int i = 0; i < n; ++i) ans += weights[i][prs[i]];
+	cout << ans << '\n';
 }
 
 
