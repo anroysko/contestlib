@@ -53,12 +53,8 @@ struct Hungarian {
 				// Update potentials
 				ll d = INF;
 				for (int j = 0; j < n; ++j) {
-					if (sa[j]) {
-						// cout << "Offer for d: " << sa[j] << " from " << j << '\n';
-						d = min(d, sa[j]);
-					}
+					if (sa[j]) d = min(d, sa[j]);
 				}
-				// cout << "Updating potentials with delta " << d << '\n';
 				bool found = false;
 				for (auto i : que) lp[i] += d;
 				for (int j = 0; j < n; ++j) {
@@ -66,7 +62,6 @@ struct Hungarian {
 						sa[j] -= d;
 						if (! found) found |= extend(j, sa, pre, que);
 					} else rp[j] -= d;
-					// cout << "SA of " << j << ": " << sa[j] << '\n';
 				}
 				if (found) return;
 			}
@@ -84,8 +79,6 @@ struct Hungarian {
 	}
 	vector<int> solve() {
 		for (int i = 0; i < n; ++i) step();
-		// for (int i = 0; i < n; ++i) cout << lp[i] << ' '; cout << '\n';
-		// for (int i = 0; i < n; ++i) cout << rp[i] << ' '; cout << '\n';
 		return lm;
 	}
 };
@@ -111,9 +104,3 @@ int main() {
 	for (int i = 0; i < n; ++i) ans += weights[i][prs[i]];
 	cout << ans << '\n';
 }
-
-
-
-
-
-
