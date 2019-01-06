@@ -1,18 +1,15 @@
 #include <iostream>
 #include <vector>
-#include <utility>
 #include <algorithm>
 using namespace std;
 
 struct Graph {
 	vector<vector<int>> conns;
 
-	Graph(int n) : conns(n) {}
-
-	vector<int>& operator[](int i) {
-		return conns[i];
+	void init(int n) {
+		conns.resize(n);
 	}
-	const vector<int>& operator[](int i) const {
+	vector<int>& operator[](int i) {
 		return conns[i];
 	}
 	int size() const {
@@ -20,76 +17,67 @@ struct Graph {
 	}
 };
 
-void topoDfs(const Graph& g, vector<bool>& vis, vector<int>& topo, int i) {
-	if (vis[i]) return;
-	vis[i] = true;
-	for (auto t : g[i]) topoDfs(g, vis, topo, t);
-	topo.push_back(i);
-}
+// Struct for finding strongly connected components in a graph
+// Complexity: O(n + m log n)
+struct SCC {
+	Graph g; // Input graph
+	Graph rev_g; // g reversed
+	vector<int> topo; // Topological sort of g
+	vector<int> comp; // Component of node i in res
+	Graph res; // result graph
 
-// Gets a topological order of the given graph
-// nodes in same strongly connected component may be in any order
-vector<int> topoSort(const Graph& g) {
-	vector<bool> vis(g.size(), false);
-	vector<int> topo;
-	for (int i = 0; i < g.size(); ++i) {
-		topoDfs(g, vis, topo, i);
+	void topoDfs(int i) {
+		if (comp[i]) return;
+		comp[i] = -1;
+		for (auto t : g[i]) topoDfs(t);
+		topo.push_back(i);
 	}
-	reverse(topo.begin(), topo.end());
-	return topo;
-}
-
-// Returns graph with direction of all edges reversed, compared to g
-Graph reverseGraph(const Graph& g) {
-	Graph rev(g.size());
-	for (int i = 0; i < g.size(); ++i) {
-		for (auto t : g[i]) rev[t].push_back(i);
+	bool floodFill(int i, int v) {
+		if (comp[i] != -1) return false;
+		comp[i] = v;
+		for (auto t : rev_g[i]) floodFill(t, v);
+		return true;
 	}
-	return rev;
-}
+	void init(const Graph& graph) {
+		int n = graph.size();
+		g = graph;
 
-bool floodFill(const Graph& g, vector<int>& comp, int i, int v) {
-	if (comp[i] != -1) return false;
-	comp[i] = v;
-	for (int t : g[i]) floodFill(g, comp, t, v);
-	return true;
-}
+		// Build reverse graph
+		rev_g.init(n);
+		for (int i = 0; i < n; ++i) {
+			for (int t : g[i]) rev_g[t].push_back(i);
+		}
 
-// Finds strongly connected components in a graph
-// Returns {r, v}, where r is a graph with merged
-// connected components, and v tells which comp in r
-// nodes in g belong to.
-// Time Complexity: O(n + m log n)
-pair<Graph, vector<int>> connComp(const Graph& g) {
-	Graph gr = reverseGraph(g);
-	vector<int> topo = topoSort(g);
+		// Find topo order
+		comp.resize(n, 0);
+		for (int i = 0; i < n; ++i) topoDfs(i);
+		reverse(topo.begin(), topo.end());
 
-	int cc = 0; // Comp count
-	vector<int> comp(g.size(), -1);
-	for (int i : topo) {
-		cc += floodFill(gr, comp, i, cc);
-	}
+		// Find comps
+		int cc = 0;
+		for (int i : topo) cc += floodFill(i, cc);
 
-	Graph res(cc);
-	for (int i : topo) {
-		int ic = comp[i];
-		for (auto t : g[i]) {
-			int tc = comp[t];
-			if (ic != tc) res[ic].push_back(tc);
+		// Build res graph
+		res.init(cc);
+		for (int i = 0; i < n; ++i) {	
+			for (auto t : g[i]) {
+				int ic = comp[i];
+				int tc = comp[t];
+				if (ic != tc) res[ic].push_back(tc);
+			}
+		}
+		for (int i = 0; i < cc; ++i) {
+			sort(res[i].begin(), res[i].end());
+			res[i].erase(unique(res[i].begin(), res[i].end()), res[i].end());
 		}
 	}
-	for (int i = 0; i < cc; ++i) {
-		sort(res[i].begin(), res[i].end());
-		res[i].erase(unique(res[i].begin(), res[i].end()), res[i].end());
-	}
-	return {res, comp};
-}
+};
 
 // Example usage
 int main() {
 	int n, m;
 	cin >> n >> m;
-	Graph g(n);
+	Graph g; g.init(n);
 	for (int j = 0; j < m; ++j) {
 		int a, b;
 		cin >> a >> b;
@@ -97,9 +85,11 @@ int main() {
 		g[a].push_back(b);
 	}
 
-	auto scc = connComp(g);
-	for (int i = 0; i < scc.first.size(); ++i) {
-		for (auto t : scc.first[i]) cout << i+1 << " -> " << t+1 << '\n';
+	SCC scc; scc.init(g);
+
+	for (int i = 0; i < scc.res.size(); ++i) {
+		for (auto t : scc.res[i]) cout << i+1 << " -> " << t+1 << '\n';
 	}
-	for (int i = 0; i < n; ++i) cout << scc.second[i]+1 << ' '; cout << '\n';
+	for (int i = 0; i < n; ++i) cout << scc.comp[i]+1 << ' '; cout << '\n';
+	for (int i = 0; i < n; ++i) cout << scc.topo[i]+1 << ' '; cout << '\n';
 }
