@@ -1,125 +1,58 @@
 #include <iostream>
 #include <vector>
 #include <utility>
-#include <algorithm>
+#include <assert.h>
 using namespace std;
 typedef long long ll;
+typedef vector<vector<pair<int, ll>>> Graph;
 const ll INF = 1e18;
 
-// For better cache efficiency (two-dimensional arrays suck at this)
-// Can be removed, is easy to replace.
-template<class T>
-struct TwoDimArray {
-	vector<T> data;
-	vector<int> starts;
-
-	void init(const vector<vector<T>>& vec) {
-		int n = vec.size();
-		int m = 0;
-		for (int i = 0; i < n; ++i) m += vec[i].size();
-		
-		starts.resize(n+1);
-		data.resize(m);
-		int j = 0;
-		for (int i = 0; i < n; ++i) {
-			starts[i] = j;
-			for (int ind = 0; ind < vec[i].size(); ++ind) {
-				data[j+ind] = vec[i][ind];
-			}
-			j += vec[i].size();
-		}
-		starts[n] = m;
+// Struct for priority queue operations on
+// index set [1, n] with really good constants
+struct FastPrique {
+	vector<pair<ll, int>> data;
+	FastPrique(int n, ll ini = INF) : data(2*n, {ini, -1}) {
+		data[0] = {-INF, -1};
 	}
-	T& operator()(int x, int y) {
-		return data[starts[x] + y];
-	}
-	const T& operator()(int x, int y) const {
-		return data[starts[x] + y];
-	}
-	int size(int x) const {
-		return starts[x+1] - starts[x];
-	}
-};
-
-// A min-segment tree that works as a priority queue.
-// only keys [0, n) can have their values set. Push on a set index overrides it.
-// decKey can be used to create a new element.
-// Only supports values <= INF.
-// All operations are log(n), with very fast constants.
-struct SegPriQue {
-	vector<ll> vals;
-	
-	void init(int n) {
-		vals.resize(2*n, INF + 1);
-	}
-
-	bool empty() {
-		return (vals[1] == INF + 1);
-	}
-
-	void push(int i, ll v) {
-		int n = vals.size() / 2;
-		i += n;
-		vals[i] = v;
-		while(i > 1) {
-			vals[i >> 1] = min(vals[i], vals[i ^ 1]);
-			i >>= 1;
-		}
-	}
-
 	void decKey(int i, ll v) {
-		int n = vals.size() / 2;
-		i += n;
-		while((i > 0) && (vals[i] > v)) {
-			vals[i] = v;
-			i >>= 1;
+		int j = i + data.size() / 2;
+		while(data[j].first > v) {
+			data[j] = {v, i};
+			j >>= 1;
 		}
 	}
-
-	pair<int, ll> top() {
-		int n = vals.size() / 2;
-		int i = 1;
-		ll v = vals[1];
-		while(i < n) {
-			int le = i<<1;
-			if (vals[le] == v) i = le;
-			else i = le+1;
+	pair<ll, int> pop() {
+		auto res = data[1];
+		int j = res.second + data.size() / 2;
+		data[j] = {INF, -1};
+		for (; j > 1; j >>= 1) {
+			data[j >> 1] = min(data[j], data[j^1]);
 		}
-		return {i-n, v};
-	}
-	
-	pair<int, ll> pop() {
-		auto res = top();
-		push(res.first, INF + 1);
 		return res;
 	}
+	bool empty() {
+		return data[1].first == INF;
+	}
 };
 
-// Find shortest path from src to tar.
-// To find shortest paths to all nodes, pick tar = -1.
-// If tar != -1, cost/prev is not necessarily defined for nodes not on shortest path to tar.
-// Cost of cheapest path to node i is costs[i]. Previous node on path to node i is prev[i]. prev[src] == -1.
+// Find shortest paths from src to all other nodes.
+// cost[i] is cost from src to node i
+// prev[i] is previous node on cheapest path from src to i
 // Complexity: O(m log n)
-// Preconditions: cost and prev have size n.
-void djikstra(int src, int tar, vector<ll>& cost, vector<int>& prev, const TwoDimArray<pair<int, int>>& edges) {
-	int n = cost.size();
-	for (int i = 0; i < n; ++i) cost[i] = INF;
+pair<vector<ll>, vector<int>> djikstra(int src, const Graph& g) {
+	int n = g.size();
+	vector<ll> cost(n, INF);
+	vector<int> prev(n, -1);
 
-	SegPriQue que;
-	que.init(n);
-	que.push(src, 0);
+	FastPrique que(n);
+	que.decKey(src, 0);
 	cost[src] = 0;
-	prev[src] = -1;
 	
 	while(! que.empty()) {
-		int i = que.pop().first;
-		if (i == tar) return;
-
-		for (int ti = 0; ti < edges.size(i); ++ti) {
-			auto tec = edges(i, ti);
-			int t = tec.first;
-			ll offer = cost[i] + tec.second;
-			
+		int i = que.pop().second;
+		for (auto ed : g[i]) {
+			int t = ed.first;
+			ll offer = cost[i] + ed.second;
 			if (offer < cost[t]) {
 				que.decKey(t, offer);
 				cost[t] = offer;
@@ -127,33 +60,24 @@ void djikstra(int src, int tar, vector<ll>& cost, vector<int>& prev, const TwoDi
 			}
 		}
 	}
+	return {cost, prev};
 }
 
-// Prints for every node, what is the shortest distance to that node from node 0,
-// and what is the previous node on the optimal path.
+// Example usage
 int main() {
-	ios_base::sync_with_stdio(false);
-	cin.tie(0);
+	int n, m, s;
+	cin >> n >> m >> s;
+	--s;
 
-	int n, m, s, t;
-	cin >> n >> m >> s >> t;
-	--s; --t;
-
-	vector<vector<pair<int, int>>> tmp_edges(n);
+	Graph g(n);
 	for (int i = 0; i < m; ++i) {
 		int a, b; ll c;
 		cin >> a >> b >> c;
 		--a; --b;
-		tmp_edges[a].push_back({b, c});
+		g[a].push_back({b, c});
 	}
 
-	TwoDimArray<pair<int, int>> edges;
-	edges.init(tmp_edges);
-	
-	vector<ll> cost(n);
-	vector<int> prev(n);
-	
-	djikstra(s, t, cost, prev, edges);
-	for (auto v : cost) cout << v << ' '; cout << '\n';
-	for (auto v : prev) cout << v << ' '; cout << '\n';
+	auto res = djikstra(s, g);
+	for (auto v : res.first) cout << v << ' '; cout << '\n';
+	for (auto v : res.second) cout << v << ' '; cout << '\n';
 }
