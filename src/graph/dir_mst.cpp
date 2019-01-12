@@ -13,14 +13,12 @@ struct Edge {
 };
 
 // Finds minimum directed spanning tree of input graph ( http://www.cs.tau.ac.il/~zwick/grad-algo-13/directed-mst.pdf )
-// Contracting runs in O(m log(n)), but expanding is O(n).
-// Therefore you can construct k MST's each with arbitrary root in O(m log n + kn)
-// To do this, make a copy of this data structure after calling contract.
-struct DirMST {
-	// MAX_NODES^2 * MAX_COST must not overflow!
-	const int MAX_NODES = 1e4; 
-	const int MAX_COST = 1e9;
-	const ll INF = (ll)MAX_NODES*MAX_COST + 1;
+// Contracting runs in O(m log(n)^2), but expanding is O(n).
+// Therefore you can construct k MST's each with arbitrary root in O(m log(n)^2 + kn)
+// To do this, make copies of this structure and call expand on them.
+class DirMST {
+	const static int MAX_NODES = 1e4;
+	const static int MAX_EDGE_COST = 1e9;
 
 	int n, cn; // Initial and current node count
 	vector<int> ined; // Edge leading to this node
@@ -29,17 +27,7 @@ struct DirMST {
 	vector<ll> base; // Base cost for edges into node. Added to all costs in "ins"
 	vector<vector<int>> childs; // Child components
 	vector<priority_queue<pair<ll, int>>> ins; // All edges into this node, by cost
-	shared_ptr<Edge[]> ed; // Edge data. Done like this for copying to work and be O(n).
 
-	DirMST(int nn, const vector<Edge>& g) : n(nn), cn(nn), ined(2*nn, -1), par(2*nn), base(2*nn, 0),
-			childs(2*nn), ins(2*nn), ed(new Edge[nn+g.size()], default_delete<Edge[]>()) {
-		int m = n + g.size();
-		for (int i = 0; i < n; ++i) ed[i] = {i, (i+1)%n, INF};
-		for (int i = n; i < m; ++i) ed[i] = g[i-n];
-		for (int i = 0; i < m; ++i) ins[ed[i].t].emplace(-ed[i].c, i);
-		for (int i = 0; i < 2*n; ++i) par[i] = i;
-		group = par;
-	}
 	int coll(int i) {
 		if (group[i] != i) group[i] = coll(group[i]);
 		return group[i];
@@ -57,7 +45,7 @@ struct DirMST {
 			ins[a].emplace(el.first - dif, el.second);
 		}
 	}
-	void contract() {
+	void contract(const vector<Edge>& ed) {
 		int a = 0; // Active node
 		while(! ins[a].empty()) {
 			auto el = ins[a].top();
@@ -71,7 +59,6 @@ struct DirMST {
 			base[a] = el.first;
 			if (ined[b] == -1) a = b;
 			else {
-				// Contract the cycle
 				a = cn;
 				++cn;
 				do {
@@ -97,17 +84,25 @@ struct DirMST {
 		}
 	}
 
-	// Find min directed spanning tree rooted at r.
-	// Returns {} if no tree exists.
-	// To find minimum spanning tree with any root, add a new node
-	// with edges of cost INF to all other nodes, then subtract
-	// INF from the result.
-	vector<int> expand(int r) {
+	public:
+	const static ll INF = (ll)MAX_NODES*MAX_EDGE_COST + 1; // cost assigned to nonexistent edges
+
+	DirMST(int nn, vector<Edge> ed) : n(nn), cn(nn), ined(2*nn, -1),
+			par(2*nn), base(2*nn, 0), childs(2*nn), ins(2*nn) {
+		for (int i = 0; i < n; ++i) ed.push_back({(i+1)%n, i, INF+1});
+		for (int i = 0; i < ed.size(); ++i) ins[ed[i].t].emplace(-ed[i].c, i);
+		for (int i = 0; i < 2*n; ++i) par[i] = i;
+		group = par;
+		contract(ed);
+	}
+	// Find min directed spanning tree rooted at r. Returns {} if none exists
+	vector<int> expand(int r, const vector<Edge>& ed) {
 		vector<int> vec;
 		dismantle(r, vec);
+		int m = ed.size();
 		for (int i = 0; i < vec.size(); ++i) {
 			int ei = ined[vec[i]];
-			int t = ed[ei].t;
+			int t = (ei >= m ? ei-m : ed[ei].t);
 			ined[t] = ei;
 			dismantle(t, vec);
 		}
@@ -115,61 +110,62 @@ struct DirMST {
 		vector<int> res;
 		for (int i = 0; i < n; ++i) {
 			if (i == r) continue;
-			if (ined[i] < n) return {};
-			res.push_back(ined[i]-n);
+			if (ined[i] >= m) return {};
+			res.push_back(ined[i]);
 		}
 		return res;
 	}
 };
 
+// Example usage
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(0);
 
+	bool all;
 	int n, m;
-	cin >> n >> m;
+	cin >> n >> m >> all;
 	vector<Edge> edges(m);
 	for (int i = 0; i < m; ++i) {
 		cin >> edges[i].s >> edges[i].t >> edges[i].c;
-		--edges[i].s;
-		--edges[i].t;
+		--edges[i].s; --edges[i].t;
 	}
 	
-	/*
-	// Find cost of minimum spanning tree with arbitrary root (O(m log(n)^2))
-	edges.resize(m + n);
-	for (int i = 0; i < n; ++i) edges[i + m] = makeEdge(n, i, INF);
-	m += n;
+	if (all) {
+		// Find cost for all spanning trees (O(m log(n)^2 + n^2))
+		DirMST mst(n, edges);
+		for (int i = 0; i < n; ++i) {
+			DirMST cpy = mst;
+			vector<int> ans = cpy.expand(i, edges);
 
-	DirMST mst(n + 1, edges);
-	mst.contract();
-	vector<int> ans = mst.expand(n);
-
-	ll res = 0;
-	if (ans.empty()) res = 2 * INF;
-	for (int i = 0; (res < 2 * INF) && (i < ans.size()); ++i) res += edges[ans[i]].cost;
-	res -= INF;
-	if (res >= INF) cout << "QAQ\n";
-	else cout << res << '\n';
-	*/
-
-	/*
-	// Find cost for all spanning trees (O(m log(n)^2 + n^2))
-	DirMST mst(n, edges);
-	mst.contract();
-
-	for (int i = 0; i < n; ++i) {
-		DirMST cpy = mst;
-		vector<int> ans = cpy.expand(i);
-		
-		if (ans.empty()) {
-			cout << "QAQ ";
-		} else {
-			ll res = 0;
-			for (auto i : ans) res += edges[i].cost;
-			cout << res << ' ';
+			if (ans.empty()) cout << "QAQ\n";
+			else {
+				ll res = 0;
+				for (auto i : ans) res += edges[i].c;
+				cout << res << '\n';
+			}
 		}
+	} else {
+		// Find cost of minimum spanning tree with arbitrary root (O(m log(n)^2))
+		// to do this, add new node with inf-cost edges to all nodes, and expand on it.
+		// For implementation details, note that this usecase is why edges in the struct are inited to INF+1.
+		for (int i = 0; i < n; ++i) {
+			edges.push_back({n, i, DirMST::INF});
+		}
+		DirMST mst(n+1, edges);
+		vector<int> ans = mst.expand(n, edges);
+
+		ll res = 0;
+		int root = -1;
+		if (ans.empty()) res = 2 * DirMST::INF;
+		for (auto i : ans) {
+			res += edges[i].c;
+			if (res >= 2 * DirMST::INF) break;
+			if (i >= m) root = i - m;
+		}
+		res -= DirMST::INF;
+
+		if (res >= DirMST::INF) cout << "QAQ\n";
+		else cout << res << ' ' << root+1 << '\n';
 	}
-	cout << '\n';
-	*/
 }
