@@ -2,7 +2,7 @@
 
 TODO:
 - Math
-  - [ ] FFT
+  - [x] FFT
   - [x] Fast Hadamard Transform
   - [ ] Simplex
   - [ ] Berlecamp-massey
@@ -11,25 +11,27 @@ TODO:
   - [x] LUP-decomposition
 - Number theory
   - [x] Extended Euclidean
-  - [ ] Pollard-rho
-  - [ ] Linear Sieve
-  - [ ] Miller-rabin primality test
+  - [x] Pollard-rho
+  - [x] Linear Sieve
+  - [x] Miller-rabin primality test
   - [ ] Chinese Remainder Theorem
   - [ ] Primitive root
-  - [ ] Adleman-Manders-Miller
-  - [ ] NTT
+  - [x] Adleman-Manders-Miller
+  - [x] NTT
 - Datastructure
   - [ ] Treap
-  - [x] Dynamic Convex Hull
-  - [ ] Merge sparse segment tree
+  - [x] Li Chao tree
+  - [ ] Dynamic Convex Hull
+  - [x] Merge sparse segment tree
   - [ ] History information sum segment tree
   - [ ] Fast regular segment tree
   - [ ] HLD
   - [ ] Indexed set
   - [ ] Link/Cut tree
 - String
-  - [ ] KMP
-  - [ ] Z-algorithm
+  - [x] KMP
+  - [x] Z-algorithm
+  - [ ] Aho-Corasick
   - [ ] Suffix tree
   - [ ] Suffix array
   - [ ] LCP array
@@ -37,17 +39,19 @@ TODO:
   - [ ] Bridges
   - [ ] Cut Vertices
   - [ ] Euler tour
-  - [ ] Strongly connected components
+  - [x] Strongly connected components
+  - [x] 2SAT
   - [ ] Min spanning tree
-  - [ ] Min directed spanning tree
+  - [x] Min directed spanning tree
   - [ ] Fast ascent in tree
   - [ ] Offline dynamic connectivity
-  - [ ] Maximum flow (Dinic)
+  - [x] Maximum flow (Dinic)
   - [ ] Maximum flow (Scaling flow)
+  - [x] Maximum bipartite matching
+  - [ ] Hungarian Algorithm
   - [ ] Min-cost flow
   - [ ] General Matching
 - Util
-  - [ ] 2-Sat
   - [ ] BigInt Addition, Multiplication, Modulo
   - [ ] Polynomial addition, multiplication, modulo
   - [ ] O(n log^2(n)) polynomial evaluation at n points
