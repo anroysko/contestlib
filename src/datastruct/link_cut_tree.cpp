@@ -43,11 +43,6 @@ class LinkCutTree {
 		return a->p->ch[1] == a;
 	}
 
-	// Pushes all nodes on path from na to the root of its splay tree
-	static void pushPath(T* a) {
-		if (! isRoot(a)) pushPath(a->p);
-		a->push();
-	}
 	// Zigs or zags na up one step
 	// na and its parent should be pushed beforehand
 	static void rotate(T* a) {
@@ -64,9 +59,8 @@ class LinkCutTree {
 		a->update();
 	}
 
-	// Splays on na
+	// Splays on na. Path from na to it's root should be pushed.
 	static void splay(T* a) {
-		pushPath(a);
 		while(! isRoot(a)) {
 			if (! isRoot(a->p)) {
 				if (irc(a) == irc(a->p)) rotate(a);
@@ -75,29 +69,32 @@ class LinkCutTree {
 			rotate(a);
 		}
 	}
+	// Pushes all nodes on path from na to root of its represented tree
+	static void pushPath(T* a) {
+		if (a->p) pushPath(a->p);
+		a->push();
+	}
 	// link-cut access operation
 	// DOESN'T splay on na in the end!
 	static T* access(T* a) {
-		T* b = nullptr;
-		while(a) {
-			splay(a);
-			a->ch[1] = b;
-			a->update();
-			b = a;
-			a = a->p;
+		T* b = a;
+		T* c = nullptr;
+		pushPath(b);
+		while(b) {
+			splay(b);
+			b->ch[1] = c;
+			b->update();
+			c = b;
+			b = b->p;
 		}
-		return b;
-	}
-	// Reroots the tree at a
-	static void reroot(T* a) {
-		access(a);
 		splay(a);
-		a->flip = 1;
+		return a;
 	}
+	// Reroots at a, and makes the path from a to b active
 	static T* expose(T* a, T* b) {
-		reroot(a);
+		access(a);
+		a->flip = 1;
 		access(b);
-		splay(b);
 		return b;
 	}
 	// Adds an edge between nodes a and b
@@ -107,6 +104,7 @@ class LinkCutTree {
 		if (a->p) return false;
 		else {
 			setChild(b, a, 1);
+			b->update();
 			return true;
 		}
 	}
