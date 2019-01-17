@@ -19,6 +19,9 @@ class LinkCutTree {
 		~SplayNode() {} // Intentionally doesn't delete anything
 
 		void push() {
+			if (ch[0]) assert(ch[0]->p == this);
+			if (ch[1]) assert(ch[1]->p == this);
+
 			if (flip) {
 				swap(ch[0], ch[1]);
 				if (ch[0]) ch[0]->flip ^= 1;
@@ -33,6 +36,9 @@ class LinkCutTree {
 			data.push(left_data, right_data);
 		}
 		void update() {
+			if (ch[0]) assert(ch[0]->p == this);
+			if (ch[1]) assert(ch[1]->p == this);
+
 			const T* left_data;
 			const T* right_data;
 			if (ch[0]) {
@@ -48,6 +54,11 @@ class LinkCutTree {
 	};
 	vector<SplayNode*> nodes;
 
+	static void printNode(SplayNode* node) {
+		if (node == nullptr) cout << "-1 ";
+		else cout << node->data.ind << ' ';
+	}
+	
 	// Checks whether na is its parent's right child
 	// Assumes that
 	// 	1. na is not null
@@ -84,6 +95,10 @@ class LinkCutTree {
 
 		na->update();
 		nb->update();
+
+		if (nb->p) isRightChild(nb);
+		isRightChild(na);
+		if (nc) isRightChild(nc);
 	}
 	// Splays on na
 	// Assumes that
@@ -133,7 +148,7 @@ class LinkCutTree {
 	// 	3. na is the root of its splay tree
 	static SplayNode* join(SplayNode* na, SplayNode* nb) {
 		assert(na != nullptr);
-		assert(na->ch[1] == nullptr);
+		assert(na->ch[na->flip ^ 1] == nullptr);
 		assert(na->p == nullptr);
 
 		if (nb) {
@@ -141,6 +156,8 @@ class LinkCutTree {
 			na->ch[1] = nb;
 			nb->p = na;
 			na->update();
+			
+			isRightChild(nb);
 		}
 		return na;
 	}
@@ -152,7 +169,7 @@ class LinkCutTree {
 		assert(na != nullptr);
 		assert(na->p == nullptr);
 
-		auto* nb = na->ch[1];
+		auto* nb = na->ch[1 ^ na->flip];
 		if (nb) {
 			na->push();
 			na->ch[1] = nullptr;
@@ -269,23 +286,28 @@ class LinkCutTree {
 
 		access(na);
 		splay(nb);
-		splay(na);		
-		if (na->ch[0] == nb) {
-			access(nb);
-			na->path_p = nullptr;
-			return true;
+		if (nb->ch[1] != nullptr) {
+			auto* nc = findFirst(nb->ch[1]);
+			if (nc == na) {
+				access(nb);
+				na->path_p = nullptr;
+				return true;
+			}
 		}
 
 		access(nb);
 		splay(na);
-		splay(nb);
-		if (nb->ch[0] == na) {
-			access(na);
-			nb->path_p = nullptr;
-			return true;
+		if (na->ch[1] != nullptr) {
+			auto* nc = findFirst(na->ch[1]);
+			if (nc == nb) {
+				access(na);
+				nb->path_p = nullptr;
+				return true;
+			}
 		}
 		return false;
 	}
+
 };
 
 struct IndData {
@@ -315,21 +337,22 @@ int main() {
 		if (op == 'l') {
 
 			bool fail = ! lctree.link(a, b);
-			if (fail) cout << "Already in same component\n";
+			if (fail) cout << "already connected\n";
+			else cout << "link added\n";
 		} else if (op == 'c') {
 
 			bool fail = ! lctree.cut(a, b);
-			if (fail) cout << "Edge doesn't exist\n";
+			if (fail) cout << "no such link\n";
+			else cout << "link cut\n";
 		} else {
 
 			int a_root = lctree.findRoot(a).ind;
 			int b_root = lctree.findRoot(b).ind;
 			if (a_root == b_root) {
-				cout << "Connected\n";
+				cout << "connected\n";
 			} else {
-				cout << "Not connected\n";
+				cout << "not connected\n";
 			}
 		}
 	}
-	cout << '\n';
 }
