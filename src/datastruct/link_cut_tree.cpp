@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include <assert.h>
 using namespace std;
 
@@ -167,8 +168,8 @@ class LinkCutTree {
 	static void access(SplayNode* na) {
 		assert(na != nullptr);
 
-		auto* nb = nullptr;
 		auto* nc = na;
+		SplayNode* nb = nullptr;
 		while(nc) {
 			splay(nc);
 			split(nc);
@@ -265,21 +266,25 @@ class LinkCutTree {
 
 		auto* na = nodes[a];
 		auto* nb = nodes[b];
+
 		access(na);
+		splay(nb);
+		splay(na);		
 		if (na->ch[0] == nb) {
 			access(nb);
 			na->path_p = nullptr;
 			return true;
-		} else {
-			access(nb);
-			if (nb->ch[0] == na) {
-				access(na);
-				nb->path_p = nullptr;
-				return true;
-			} else {
-				return false;
-			}
 		}
+
+		access(nb);
+		splay(na);
+		splay(nb);
+		if (nb->ch[0] == na) {
+			access(na);
+			nb->path_p = nullptr;
+			return true;
+		}
+		return false;
 	}
 };
 
@@ -295,9 +300,6 @@ struct IndData {
 // Example usage
 // Solves the tree dynamic connectivity problem
 int main() {
-	ios_base::sync_with_stdio(false);
-	cin.tie(0);
-
 	int n, q;
 	cin >> n >> q;
 
@@ -311,13 +313,22 @@ int main() {
 		cin >> op >> a >> b;
 		--a; --b;
 		if (op == 'l') {
-			lctree.link(a, b);
+
+			bool fail = ! lctree.link(a, b);
+			if (fail) cout << "Already in same component\n";
 		} else if (op == 'c') {
-			lctree.cut(a, b);
+
+			bool fail = ! lctree.cut(a, b);
+			if (fail) cout << "Edge doesn't exist\n";
 		} else {
+
 			int a_root = lctree.findRoot(a).ind;
 			int b_root = lctree.findRoot(b).ind;
-			cout << (a_root == b_root);
+			if (a_root == b_root) {
+				cout << "Connected\n";
+			} else {
+				cout << "Not connected\n";
+			}
 		}
 	}
 	cout << '\n';
