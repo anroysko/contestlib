@@ -61,5 +61,6 @@ struct Treap {
 
 // No example usage since unaugmented this doesn't really do anything
 int main() {
-	
+	// c = Treap::join(a, b)
+	// tie(a, b) = Treap::split(a_size, x)
 }
