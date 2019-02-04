@@ -14,12 +14,13 @@ TODO:
   - [x] Pollard-rho
   - [x] Linear Sieve
   - [x] Miller-rabin primality test
+  - [ ] Baby-step Giant step
   - [ ] Chinese Remainder Theorem
   - [ ] Primitive root
   - [x] Adleman-Manders-Miller
   - [x] NTT
 - Datastructure
-  - [ ] Treap
+  - [x] Treap
   - [x] Li Chao tree
   - [ ] Dynamic Convex Hull
   - [x] Merge sparse segment tree
@@ -27,7 +28,6 @@ TODO:
   - [ ] Fast regular segment tree
   - [ ] HLD
   - [ ] Indexed set
-  - [ ] Link/Cut tree
 - String
   - [x] KMP
   - [x] Z-algorithm
@@ -48,9 +48,10 @@ TODO:
   - [x] Maximum flow (Dinic)
   - [ ] Maximum flow (Scaling flow)
   - [x] Maximum bipartite matching
-  - [ ] Hungarian Algorithm
+  - [x] Hungarian Algorithm
   - [ ] Min-cost flow
   - [ ] General Matching
+  - [x] Link/Cut tree
 - Util
   - [ ] BigInt Addition, Multiplication, Modulo
   - [ ] Polynomial addition, multiplication, modulo
