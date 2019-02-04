@@ -14,6 +14,7 @@ TODO:
   - [x] Pollard-rho
   - [x] Linear Sieve
   - [x] Miller-rabin primality test
+  - [ ] Factorization
   - [ ] Baby-step Giant step
   - [ ] Chinese Remainder Theorem
   - [ ] Primitive root
