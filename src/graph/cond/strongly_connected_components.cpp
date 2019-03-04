@@ -3,6 +3,38 @@
 using namespace std;
 typedef vector<vector<int>> Graph;
 
+// Gets condensed version of a graph.
+// Requires .cc (comp count), .g (orignal graph), .comp (comp in condensed graph)
+// Complexity: O(n + m)
+template<class T>
+Graph getCond(const T& s) {
+	Graph res(s.cc);
+	for (int i = 0; i < s.g.size(); ++i) {
+		for (auto t : s.g[i]) res[s.comp[i]].push_back(s.comp[t]);
+	}
+
+	// Remove self-loops and duplicate edges
+	vector<bool> seen(s.cc, false);
+	for (int i = 0; i < s.cc; ++i) {
+		seen[i] = true; // Remove self-loop
+		int j = 0; // Number of actuals
+		int r = 0; // Number of removes
+		while(j+r < res[i].size()) {
+			swap(res[i][j], res[i][j+r]);
+			if (seen[res[i][j]]) ++r;
+			else {
+				seen[res[i][j]] = true;
+				++j;
+			}
+		}
+		res[i].resize(j);
+		for (int v : res[i]) seen[v] = false;
+		seen[i] = false;
+	}
+	return res;
+}
+
+
 // Struct for finding strongly connected components in a graph
 // Condensed graph is in reverse topological order
 // "comp" gives component in condensed graph that node i is in
@@ -36,30 +68,6 @@ struct SCC {
 	SCC(const Graph& gr) : g(gr), comp(gr.size(), -1), ind(gr.size(), -1) {
 		for (int i = 0; i < g.size(); ++i) dfs(i);
 	}
-	Graph getCond() {
-		Graph res(cc);
-		for (int i = 0; i < g.size(); ++i) {
-			for (auto t : g[i]) res[comp[i]].push_back(comp[t]);
-		}
-		vector<bool> seen(cc, false);
-		for (int i = 0; i < cc; ++i) {
-			seen[i] = true; // Remove self-loop
-			int j = 0; // Number of actuals
-			int r = 0; // Number of removes
-			while(j+r < res[i].size()) {
-				swap(res[i][j], res[i][j+r]);
-				if (seen[res[i][j]]) ++r;
-				else {
-					seen[res[i][j]] = true;
-					++j;
-				}
-			}
-			res[i].resize(j);
-			for (int v : res[i]) seen[v] = false;
-			seen[i] = false;
-		}
-		return res;
-	}
 };
 
 // Example usage
@@ -75,7 +83,7 @@ int main() {
 	}
 
 	SCC scc(g);
-	Graph res = scc.getCond();
+	Graph res = getCond<SCC>(scc);
 	for (int i = 0; i < res.size(); ++i) {
 		cout << i+1 << ": ";
 		for (auto t : res[i]) cout << t+1 << ' ' ; cout << '\n';

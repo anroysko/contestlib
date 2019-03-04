@@ -19,7 +19,7 @@ bool isWitness(lll w, lll ctz, lll odd, lll x) {
 		w = (w * w) % x;
 		--ctz;
 	}
-	return ctz >= 1;
+	return (ctz == 0);
 }
 bool isPrime(ll x) {
 	if (x <= 1 || (x % 2 == 0 && x > 2)) return 0;
