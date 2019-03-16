@@ -12,7 +12,7 @@ struct Line {
 	// Special case: returns true if le==this==ri. This is needed to
 	// not have duplicates in the convex hull. Assumes le.a <= a <= ri.a.
 	bool redundant(Line le, Line ri) {
-		if (le.a == ri.a) return b >= min(le.b, ri.b);
+		if (le.a == ri.a) return (b > min(le.b, ri.b)) || (le.b == b && b == ri.b);
 		return (T2)(le.b - ri.b) * (le.a - a) < (T2)(le.b - b) * (le.a - ri.a);
 	}
 };
