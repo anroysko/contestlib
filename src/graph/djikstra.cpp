@@ -1,60 +1,43 @@
 #include <iostream>
 #include <vector>
-#include <utility>
-#include <assert.h>
+#include <queue>
+#include <tuple>
 using namespace std;
-typedef long long ll;
-typedef vector<vector<pair<int, ll>>> Graph;
+using ll = long long;
 const ll INF = 1e18;
 
-// Struct for priority queue operations on
-// index set [1, n] with really good constants
-struct FastPrique {
-	vector<pair<ll, int>> data;
-	FastPrique(int n, ll ini = INF) : data(2*n, {ini, -1}) {
-		data[0] = {-INF, -1};
-	}
-	void decKey(int i, ll v) {
-		int j = i + data.size() / 2;
-		while(data[j].first > v) {
-			data[j] = {v, i};
-			j >>= 1;
-		}
-	}
-	pair<ll, int> pop() {
-		auto res = data[1];
-		int j = res.second + data.size() / 2;
-		data[j] = {INF, -1};
-		for (; j > 1; j >>= 1) {
-			data[j >> 1] = min(data[j], data[j^1]);
-		}
-		return res;
-	}
-	bool empty() {
-		return data[1].first == INF;
+struct Edge {
+	int s, t, w;
+	int oth(int x) {
+		return x == s ? t : s;
 	}
 };
+using Graph = vector<vector<Edge>>;
 
 // Find shortest paths from src to all other nodes.
 // cost[i] is cost from src to node i
 // prev[i] is previous node on cheapest path from src to i
-// Complexity: O(m log n)
+// Complexity: O(m log n), Space: O(m log m)
 pair<vector<ll>, vector<int>> djikstra(int src, const Graph& g) {
 	int n = g.size();
 	vector<ll> cost(n, INF);
 	vector<int> prev(n, -1);
 
-	FastPrique que(n);
-	que.decKey(src, 0);
+	priority_queue<pair<ll, int>> que;
+	que.push({0, src});
 	cost[src] = 0;
 	
 	while(! que.empty()) {
-		int i = que.pop().second;
+		int w = -que.top().first;
+		int i = que.top().second;
+		que.pop();
+		if (w != cost[i]) continue;
+
 		for (auto ed : g[i]) {
-			int t = ed.first;
-			ll offer = cost[i] + ed.second;
+			int t = ed.oth(i);
+			ll offer = w + ed.w;
 			if (offer < cost[t]) {
-				que.decKey(t, offer);
+				que.push({-offer, t});
 				cost[t] = offer;
 				prev[t] = i;
 			}
@@ -65,19 +48,23 @@ pair<vector<ll>, vector<int>> djikstra(int src, const Graph& g) {
 
 // Example usage
 int main() {
-	int n, m, s;
-	cin >> n >> m >> s;
-	--s;
+	int n, m, src;
+	cin >> n >> m >> src;
+	--src;
 
 	Graph g(n);
 	for (int i = 0; i < m; ++i) {
-		int a, b; ll c;
+		int a, b, c;
 		cin >> a >> b >> c;
 		--a; --b;
-		g[a].push_back({b, c});
+		g[a].push_back({a, b, c});
+		// g[b].push_back({a, b, c}); // uncomment if undirected
 	}
 
-	auto res = djikstra(s, g);
-	for (auto v : res.first) cout << v << ' '; cout << '\n';
-	for (auto v : res.second) cout << v << ' '; cout << '\n';
+	vector<ll> cost;
+	vector<int> prev;
+	tie(cost, prev) = djikstra(src, g);
+
+	for (auto v : cost) cout << v << ' '; cout << '\n';
+	for (auto v : prev) cout << v << ' '; cout << '\n';
 }
