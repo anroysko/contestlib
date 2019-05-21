@@ -23,6 +23,7 @@ struct HLD {
 			if (ind[i] != -1) continue;
 			for (int j = i; j != -1; j = pc[j], ++cur) {
 				ind[i] = cur;
+				pp[j] = i;
 			}
 		}
 	}
@@ -31,7 +32,7 @@ struct HLD {
 		vector<pair<int, int>> res;
 		while(true) {
 			if (ind[b] < ind[a]) swap(a, b);
-			if (ind[pp[b]] <= a) {
+			if (ind[pp[b]] <= ind[a]) {
 				res.push_back({ind[a], ind[b]});
 				return res;
 			} else {
@@ -42,7 +43,7 @@ struct HLD {
 	}
 };
 
-// Example usage
+// Example usage. Answers LCA-queries
 int main() {
 	int n, q;
 	cin >> n >> q;
@@ -51,14 +52,15 @@ int main() {
 	for (int i = 0; i < n; ++i) cin >> p[i];
 
 	HLD hld(p);
-	for (int i = 0; i < n; ++i) cout << hld.ind[i] << ' '; cout << '\n';
+
+	vector<int> rev(n);
+	for (int i = 0; i < n; ++i) rev[hld.ind[i]] = i;
 
 	for (int j = 0; j < q; ++j) {
 		int a, b;
 		cin >> a >> b;
-		--a; --b;
 
-		auto segs = hld.get(a, b);
-		for (auto pr : segs) cout << pr.first << ' ' << pr.second << '\n';
+		int res = rev[hld.get(a, b).back().first];
+		cout << res << '\n';
 	}
 }
