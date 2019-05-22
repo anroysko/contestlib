@@ -22,7 +22,7 @@ struct HLD {
 		for (int i = 0; i < n; ++i) {
 			if (ind[i] != -1) continue;
 			for (int j = i; j != -1; j = pc[j], ++cur) {
-				ind[i] = cur;
+				ind[j] = cur;
 				pp[j] = i;
 			}
 		}
@@ -39,6 +39,14 @@ struct HLD {
 				res.push_back({ind[pp[b]], ind[b]});
 				b = par[pp[b]];
 			}
+		}
+	}
+	// Get LCA of a and b
+	int lca(int a, int b) const {
+		while(true) {
+			if (ind[b] < ind[a]) swap(a, b);
+			if (ind[pp[b]] <= ind[a]) return a;
+			else b = par[pp[b]];
 		}
 	}
 };
@@ -60,7 +68,8 @@ int main() {
 		int a, b;
 		cin >> a >> b;
 
-		int res = rev[hld.get(a, b).back().first];
-		cout << res << '\n';
+		int res1 = rev[hld.get(a, b).back().first];
+		int res2 = hdl.lca(a, b);
+		cout << res1 << ' ' << res2 << '\n';
 	}
 }
