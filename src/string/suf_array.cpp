@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include <algorithm>
 using namespace std;
 
@@ -36,20 +37,34 @@ vector<int> compress(const vector<T>& vec) {
 	return res;
 }
 
-// Builds ind-array of suffix array for the input.
+// Returns array giving index of suffix in the suffix array.
 // Cyclic, append '#' or -1 if you want to get non-cyclic result.
 // Complexity: O(n log^2 n), where n = str.size()
-vector<int> sa(const vector<int>& str) {
+vector<int> suffInd(const vector<int>& str) {
 	int n = str.size();
-	vector<int> ind = str;
+	vector<int> ind = str; // ind[i] := index of suffix starting at i in the suffix array
 	vector<pair<int, int>> vals(n);
 	for (int l = 0; l < n; l = (l ? l<<1 : 1)) {
 		for (int i = 0; i < n; ++i) vals[i] = {ind[i], ind[(i+l)%n]};
-		ind = collapse(vals);
+		ind = compress(vals);
 	}
 	return ind;
 }
 
 int main() {
-	// TODO: example usage
+	string str;
+	cin >> str;
+	str.push_back('#');
+	int n = str.size();
+
+	vector<int> vals(n);
+	for (int i = 0; i < n; ++i) vals[i] = str[i] - 'a';
+	vector<int> ind = suffInd(vals);
+
+	vector<int> sa(n);
+	for (int i = 0; i < n; ++i) sa[ind[i]] = i;
+
+	cout << str << '\n';
+	for (auto v : ind) cout << v << ' '; cout << '\n';
+	for (auto v : sa) cout << v << ' '; cout << '\n';
 }
