@@ -3,7 +3,8 @@
 #include <algorithm>
 using namespace std;
 
-// Finds number of elements smaller than v. If v exists in vec, returns its index.
+// Binary search. Assumes vec is sorted
+// res := number of elements strictly smaller than v in vec
 // Complexity: O(log n), where n = vec.size()
 template<class T>
 int bins(const vector<T>& vec, T v) {
@@ -17,28 +18,22 @@ int bins(const vector<T>& vec, T v) {
 	return low;
 }
 
-// Returns sorted array of unique values in the input vector
-// Complexity: O(n log n), where n = vec.size()
-template<class T>
-vector<T> sortedUnique(vector<T> vec) {
-	sort(vec.begin(), vec.end());
-	vec.erase(unique(vec.begin(), vec.end()), vec.end());
-	return vec;
-}
-
 // Coordinate Compression
-// res[i] is the amount of unique elements in vec strictly smaller than vec[i].
+// res[i] := number of unique elements in vec strictly smaller than vec[i]
 // Complexity: O(n log n), where n = vec.size()
 template<class T>
 vector<int> compress(const vector<T>& vec) {
-	vector<T> coll = sortedUnique(vec);
+	vector<T> coll = vec;
+	sort(coll.begin(), coll.end());
+	coll.erase(unique(coll.begin(), coll.end()), coll.end());
+
 	vector<int> res(vec.size());
 	for (int i = 0; i < vec.size(); ++i) res[i] = bins(coll, vec[i]);
 	return res;
 }
 
-// Returns array giving index of suffix in the suffix array.
-// Cyclic, append '#' or -1 if you want to get non-cyclic result.
+// Cyclic suffix index construction. Append -1 or '#' to str to get non-cyclic indexes.
+// res[i] := index of suffix starting at i in cyclic suffix array of str
 // Complexity: O(n log^2 n), where n = str.size()
 vector<int> suffInd(const vector<int>& str) {
 	int n = str.size();
