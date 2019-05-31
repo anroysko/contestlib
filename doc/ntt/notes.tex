@@ -385,7 +385,7 @@ M2	&= \left[\begin{array}{ccccc}
 	\frac{1}{i!}\\
 	\vdots\\
 	\frac{1}{(n-1)!}\\
-	\end{bmatrix}\right) M3 diag\left(\begin{bmatrix}
+	\end{bmatrix}\right)\ M3\ diag\left(\begin{bmatrix}
 	\frac{1}{0!}\\
 	\vdots\\
 	\frac{1}{i!}\\
@@ -417,7 +417,7 @@ Note that we can multiply a vector with a diagonal matrix in $O(n)$, and that bo
 
 Matrices in this form are called Hankel matrices. We'll later show how to multiply a vector with a matrix in this form in $O(n \log n)$ time using NTT.
 
-So now we just calculate $c = c1 + c2$ in $O(n \log n)$ time. $d$ is symmetric, swapping $a$ and $b$. We just need to calculate the values
+So now we just calculate $c = c1 + c2$ in $O(n \log n)$ time with two FFT-calls. $d$ is symmetric, swapping $a$ and $b$. We just need to calculate the values
 $\binom{k}{n-1}$ and $k!$ for $0 \leq k < 2n-1$. But $\binom{k}{n-1} = \frac{k!}{(n-1)!k!}$, so it is enough to precalculate the values and modular inverses
 of $0 \leq k < 2n-1$. This can be done in $O(n \log n)$ time by calculating inverses with the extended euclidean algorithm, assuming we can do arithmetic
 operations on numbers up to $P$ in $O(1)$ time.
