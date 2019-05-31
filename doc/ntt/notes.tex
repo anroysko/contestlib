@@ -7,6 +7,13 @@
 \usepackage{hyperref}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{fp}[nomessages]
+\usepackage{tikz}
+
+\setlength{\parindent}{0pt}
+
+\usetikzlibrary{fit}
+\usetikzlibrary{arrows}
 
 \lstset { %
 	language=C++,
@@ -14,17 +21,15 @@
 	basicstyle=\footnotesize,% basic font setting
 }
 
-\setlength{\parindent}{0pt}
-
 \graphicspath{{./graphics/}}
+
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{corollary}{Corollary}[theorem]
 \newtheorem{lemma}{Lemma}[theorem]
 \newtheorem{definition}{Definition}[section]
 \newtheorem*{remark}{Remark}
 
-\graphicspath{{./graphics/}}
-\title{Notes for NTT, version 0.1}
+\title{Notes for NTT, version 0.2}
 \author{Antti Roeyskoe}
 \date{31.5.2019}
 
@@ -272,7 +277,171 @@ vector<int> polyMult(const vector<int>& a, const vector<int>& b) {
 TODO
 
 \section{Tricks with NTT}
-TODO
+\subsection{Number of Paths}
+A common problem is that we want to calculate the number of paths from some source cell $(x_{s}, y_{s})$ to other cells in a grid,
+such that at every step we can move from $(x, y)$ to $(x+1, y)$ or $(x, y+1)$, and there are some blocked cells we cannot enter.
+
+Given a square with side length $n$ containing no blocked cells, and how many ways exist to get from the source to each cell on the left side
+or on the bottom side of the square, we want to calculate the number of ways to get from the source to cells on the top side and right side of the square.
+
+This is possible since any path from the source cell to a cell in the square must travel through its left or bottom side. To calculate the number of ways
+to reach the top and right sides, we can use simple $O(n^{2})$ dp, setting $ways[x][y] = (ways[x-1][y] + ways[x][y-1]) \% P$.
+
+\begin{figure}[]
+\begin{center}
+\begin{tikzpicture}[]
+	\draw[step=1cm,gray,very thin] (-0.9,-0.9) grid (6.9, 6.9);
+	\foreach \i in {0,1,2,3,4,5}
+		\def\x{\the\numexpr-\i+5.5}
+		\draw (\x cm,0.05cm) -- (\x cm,-0.05cm) node[anchor=north] {$a_{\i}$};
+	\foreach \i in {0,1,2,3,4,5}
+		\def\x{\the\numexpr\i+0.5}
+		\draw (\x cm,6.05cm) -- (\x cm,5.95cm) node[anchor=south] {$c_{\i}$};
+	\foreach \i in {0,1,2,3,4,5}
+		\def\y{\the\numexpr-\i+5.5}
+		\draw (0.05cm,\y cm) -- (-0.05 cm,\y cm) node[anchor=east] {$b_{\i}$};
+	\foreach \i in {0,1,2,3,4,5}
+		\def\y{\the\numexpr\i+0.5}
+		\draw (6.05cm,\y cm) -- (5.95cm,\y cm) node[anchor=west] {$d_{\i}$};
+\end{tikzpicture}
+\caption{Indexing of the arrays. The arrays $a, b$ are the input arrays, and $c, d$ the output arrays.}
+\end{center}
+\end{figure}
+\begin{figure}[]
+\begin{center}
+\begin{tikzpicture}[]
+	\draw[step=2cm,gray,very thin] (-1.9,-1.9) grid (5.9, 5.9);
+	\foreach \i in {0,1}
+		\def\x{\the\numexpr-\i*2+3}
+		\draw (\x cm,0.05cm) -- (\x cm,-0.05cm) node[anchor=north] {$a_{\i}$};
+	\foreach \i in {0,1}
+		\def\x{\the\numexpr\i*2+1}
+		\draw (\x cm,4.05cm) -- (\x cm,3.95cm) node[anchor=south] {$c_{\i}$};
+	\foreach \i in {0,1}
+		\def\y{\the\numexpr-\i*2+3}
+		\draw (0.05cm,\y cm) -- (-0.05 cm,\y cm) node[anchor=east] {$b_{\i}$};
+	\foreach \i in {0,1}
+		\def\y{\the\numexpr\i*2+1}
+		\draw (4.05cm,\y cm) -- (3.95cm,\y cm) node[anchor=west] {$d_{\i}$};
+	\node[] at (-1cm, 1cm) {$1$};
+	\node[] at (-1cm, 3cm) {$3$};
+	\node[] at (1cm, -1cm) {$0$};
+	\node[] at (1cm, 1cm) {$1$};
+	\node[] at (1cm, 3cm) {$4$};
+	\node[] at (1cm, 5cm) {$4$};
+	\node[] at (3cm, -1cm) {$1$};
+	\node[] at (3cm, 1cm) {$2$};
+	\node[] at (3cm, 3cm) {$6$};
+	\node[] at (3cm, 5cm) {$6$};
+	\node[] at (5cm, 1cm) {$2$};
+	\node[] at (5cm, 3cm) {$6$};
+\end{tikzpicture}
+\caption{Example values and ways to reach the positions. Note that $c_{n-1} = d_{n-1}$,
+since they both represent the number of ways to reach the up-right corner.}
+\end{center}
+\end{figure}
+
+If $P$ is a suitable prime for $NTT$, this can be done faster, in time $O(n \log n)$.
+
+Let $c1[j]$ be the vector representing the number of ways to get from the source to $c_{j}$ through some node in $a$,
+and $c2[j]$ respectively be the number of ways to get from the source to $c_{j}$ through some node in $b$. Note that every
+path is counted exactly once among these two, so $c[j] = c1[j] + c2[j]$.
+
+We have
+\begin{align*}
+c1[j] &= \sum_{i = n-1-j}^{n-1} a[i] \binom{i+j}{n-1}\\
+c2[j] &= \sum_{i = 0}^{n-1} b[i] \binom{i+j}{j}\\
+\end{align*}
+
+So these can be calculated with the following matrix multiplications:
+\begin{align*}
+aM1 &= a\left[\begin{array}{ccccc}
+	0			&\dots	&0			&\dots	&\binom{n-1}{n-1}\\
+	\vdots			&	&\vdots			&	&\vdots\\
+	0			&\dots	&\binom{i+j}{n-1}	&\dots	&\binom{n-1+i}{n-1}\\
+	\vdots			&	&\vdots			&	&\vdots\\
+	\binom{n-1}{n-1}	&\dots	&\binom{n-1+j}{n-1}	&\dots	&\binom{2n-2}{n-1}\\
+\end{array}\right] = c1\\
+bM2 &= b\left[\begin{array}{ccccc}
+	\binom{0}{0}	&\dots	&\binom{j}{j}		&\dots	&\binom{n-1}{n-1}\\
+	\vdots		&	&\vdots			&	&\vdots\\
+	\binom{i}{0}	&\dots	&\binom{i+j}{j}		&\dots	&\binom{n-1+i}{n-1}\\
+	\vdots		&	&\vdots			&	&\vdots\\
+	\binom{n-1}{0}	&\dots	&\binom{n-1+j}{j}	&\dots	&\binom{2n-2}{n-1}\\
+\end{array}\right] = c2\\
+\end{align*}
+Changing the second to factorials we get
+\begin{align*}
+M2	&= \left[\begin{array}{ccccc}
+	\frac{0!}{0!0!}		&\dots	&\frac{j!}{j!0!}		&\dots	&\frac{(n-1)!}{(n-1)!0!}\\
+	\vdots			&	&\vdots				&	&\vdots\\
+	\frac{i!}{0!i!}		&\dots	&\frac{(i+j)!}{j!i!}		&\dots	&\frac{(n-1+i)!}{(n-1)!i!}\\
+	\vdots			&	&\vdots				&	&\vdots\\
+	\frac{(n-1)!}{0!(n-1)!}	&\dots	&\frac{(n-1+j)!}{j!(n-1)!}	&\dots	&\binom{(2n-2)!}{(n-1)!(n-1)!}\\
+\end{array}\right]\\
+	&= diag\left(\begin{bmatrix}
+	\frac{1}{0!}\\
+	\vdots\\
+	\frac{1}{i!}\\
+	\vdots\\
+	\frac{1}{(n-1)!}\\
+	\end{bmatrix}\right) M3 diag\left(\begin{bmatrix}
+	\frac{1}{0!}\\
+	\vdots\\
+	\frac{1}{i!}\\
+	\vdots\\
+	\frac{1}{(n-1)!}\\
+	\end{bmatrix}\right)\\
+\end{align*}
+Where $diag$ makes a diagonal matrix with the elements of the vector on the diagonal, and
+\begin{equation*}
+M3 = \left[\begin{array}{ccccc}
+	0!	&\dots	&j!		&\dots	&(n-1)!\\
+	\vdots	&	&\vdots		&	&\vdots\\
+	i!	&\dots	&(i+j)!		&\dots	&(i+n-1)!\\
+	\vdots	&	&\vdots		&	&\vdots\\
+	(n-1)!	&\dots	&(n-1+j)!	&\dots	&(2n-2)!\\
+	\end{array}\right]
+\end{equation*}
+
+Note that we can multiply a vector with a diagonal matrix in $O(n)$, and that both $M1$ and $M3$ have the form
+\begin{equation*}
+\left[\begin{array}{ccccc}
+	x_{0}	&\dots	&x_{j}		&\dots	&x_{n-1}\\
+	\vdots	&	&\vdots		&	&\vdots\\
+	x_{i}	&\dots	&x_{i+j}	&\dots	&x_{i+n-1}\\
+	\vdots	&	&\vdots		&	&\vdots\\
+	x_{n-1}	&\dots	&x_{n-1+j}	&\dots	&x_{2n-2}\\
+	\end{array}\right]
+\end{equation*}
+
+Matrices in this form are called Hankel matrices. We'll later show how to multiply a vector with a matrix in this form in $O(n \log n)$ time using NTT.
+
+So now we just calculate $c = c1 + c2$ in $O(n \log n)$ time. $d$ is symmetric, swapping $a$ and $b$. We just need to calculate the values
+$\binom{k}{n-1}$ and $k!$ for $0 \leq k < 2n-1$. But $\binom{k}{n-1} = \frac{k!}{(n-1)!k!}$, so it is enough to precalculate the values and modular inverses
+of $0 \leq k < 2n-1$. This can be done in $O(n \log n)$ time by calculating inverses with the extended euclidean algorithm, assuming we can do arithmetic
+operations on numbers up to $P$ in $O(1)$ time.
+
+\subsubsection{Multiplying vectors with Hankel matrices}
+We want to multiply a vector $v = [v_{0}, \dots, v_{n-1}]$ with the Hankel matrix
+\begin{equation*}
+M = \left[\begin{array}{ccccc}
+	x_{0}	&\dots	&x_{j}		&\dots	&x_{n-1}\\
+	\vdots	&	&\vdots		&	&\vdots\\
+	x_{i}	&\dots	&x_{i+j}	&\dots	&x_{i+n-1}\\
+	\vdots	&	&\vdots		&	&\vdots\\
+	x_{n-1}	&\dots	&x_{n-1+j}	&\dots	&x_{2n-2}\\
+	\end{array}\right]
+\end{equation*}
+To do this, we use NTT on the vectors $v^{'} = [v_{0}, \dots, v_{n-1}, 0, \dots, 0]$, $x^{'} = [x_{2n-2}, \dots, x_{0}]$
+of length $2n-1$. For $0 \leq i < n$, the $2n-2-i$th entry of the result will be:
+\begin{align*}
+NTT(v^{'}, x^{'})_{2n-2-i}	&= \sum_{j = 0}^{2n-2-i} v^{'}_{j} x^{'}_{2n-2-i-j}\\
+				&= \sum_{j = 0}^{n-1} v_{j} x^{'}_{2n-2 - (i+j)}\\
+				&= \sum_{j = 0}^{n-1} v_{j} x_{i+j}\\
+				&= (vM)_{i}
+\end{align*}
+So we can set $res_{i} = NTT(v^{'}, x^{'})_{2n-2-i}$ for $0 \leq i < n$
 
 \section{appendix}
 TODO
