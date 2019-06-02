@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 using namespace std;
-typedef long long ll;
+using ll = long long;
 
 // rand-function that works properly on windows, and is faster than rand
 // https://codeforces.com/blog/entry/61587
@@ -24,9 +24,11 @@ int main() {
 	vector<int> perm(n);
 	for (int i = 0; i < n; ++i) perm[i] = i;
 
-	// Taking random number in range. First is faster and fails to b < a-1.
-	cout << rand<int>(a, b) << '\n'; // Segfaults if b < a
-	cout << rand<int>() % (b-a+1) + a << '\n'; // Segfaults if b = a-1
+	// Taking random number in range. Is faster, fails to b < a-1, and infers the type
+	cout << rand(a, b) << '\n'; // Segfaults if b < a
+
+	// This is a bit slower, but works like rand() usually does.
+	cout << rand<int>() % (b-a+1) + a << '\n';
 
 	// random_shuffle uses rand(), and therefore doesn't work well on windows
 	shuffle(perm.begin(), perm.end(), rng);

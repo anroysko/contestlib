@@ -64,33 +64,30 @@ void ntt(vector<int>& pol, bool inv) {
 	}
 }
 
-// Calculates a * b = c (mod P) for two polynomials a and b. Assumes a[i], b[i] >= 0.
+// Calculates a * b = c (mod P) for two polynomials a and b. Assumes 0 <= a[i], b[i] < P.
 // Time Complexity: O(n log n) where n = O(a.size() + b.size())
 template<int P>
-vector<int> polyMult(vector<int>& a, vector<int>& b) {
+vector<int> polyMult(vector<int> a, vector<int> b) {
 	int as = a.size();
 	int bs = b.size();
 	int n = 1;
 	while(n < (as + bs)) n <<= 1;
 
-	vector<int> ap (n, 0);
-	vector<int> bp (n, 0);
-	
-	for (int i = 0; i < as; ++i) ap[i] = a[i] % P;
-	for (int i = 0; i < bs; ++i) bp[i] = b[i] % P;
-	
-	ntt<P>(ap, false);
-	ntt<P>(bp, false);
+	a.resize(n, 0);
+	b.resize(n, 0);
+	ntt<P>(a, false);
+	ntt<P>(b, false);
 
-	vector<int> cp (n);
-	for (int i = 0; i < n; ++i) cp[i] = ((ll)ap[i] * bp[i]) % P;
-
-	ntt<P>(cp, true);
-	
+	vector<int> c(n);
 	int n_inv = modPow(n, P-2, P);
-	vector<int> res(as + bs - 1);
-	for (int i = 0; i < res.size(); ++i) res[i] = ((ll)cp[i] * n_inv) % P;
-	return res;
+	for (int i = 0; i < n; ++i) {
+		ll prod = (ll)a[i]*b[i] % P;
+		c[i] = prod*n_inv % P;
+	}
+
+	ntt<P>(c, true);
+	c.resize(as+bs-1);
+	return c;
 }
 
 // Three primes p all of which have 2^21 | p-1. 3 is a generator for all of them.
