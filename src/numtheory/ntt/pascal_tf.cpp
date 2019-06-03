@@ -146,21 +146,33 @@ pair<vector<int>, vector<int>> countPaths(vector<int> a, int w, const FactPrecal
 
 	return {res_c, res_d};
 }
+
 template<int P>
-pair<vector<int>, vector<int>> solveRect(const vector<int>& a, const vector<int>& b, const FactPrecalc<P>& fp) {
+void solveRect(vector<int>& a, vector<int>& b, const FactPrecalc<P>& fp) {
 	int h = a.size();
 	int w = b.size();
+	if ((ll)h*w <= 1000*(h+w)) {
+		// Brute force result
+		for (int x = w-1; x >= 0; --x) {
+			a[h-1] += b[x];
+			if (a[h-1] >= P) a[h-1] -= P;
 
-	vector<int> res_c1, res_c2, res_d1, res_d2;
-	tie(res_c1, res_d1) = countPaths<P>(a, w, fp);
-	tie(res_d2, res_c2) = countPaths<P>(b, h, fp);
-
-	vector<int> c(h);
-	for (int i = 0; i < h; ++i) c[i] = (res_c1[i] + res_c2[i]) % P;
-	vector<int> d(w);
-	for (int i = 0; i < w; ++i) d[i] = (res_d1[i] + res_d2[i]) % P;
-
-	return {c, d};
+			for (int y = h-2; y >= 0; --y) {
+				a[y] += a[y+1];
+				if (a[y] >= P) a[y] -= P;
+			}
+			b[x] = a[0];
+		}
+		reverse(a.begin(), a.end());
+		reverse(b.begin(), b.end());
+	} else {
+		// Calculate answer in O(n log n) with NTT
+		vector<int> res_c1, res_c2, res_d1, res_d2;
+		tie(res_c1, res_d1) = countPaths<P>(a, w, fp);
+		tie(res_d2, res_c2) = countPaths<P>(b, h, fp);
+		for (int i = 0; i < h; ++i) a[i] = (res_c1[h-1-i] + res_c2[h-1-i]) % P;
+		for (int i = 0; i < w; ++i) b[i] = (res_d1[w-1-i] + res_d2[w-1-i]) % P;
+	}
 }
 
 // Three primes p all of which have 2^21 | p-1. 3 is a generator for all of them.
@@ -179,8 +191,9 @@ int main() {
 	vector<int> b(w);
 	for (int i = 0; i < h; ++i) cin >> a[i];
 	for (int i = 0; i < w; ++i) cin >> b[i];
-	vector<int> c, d;
-	tie(c, d) = solveRect<ntt_primes[0]>(a, b, fp);
+	vector<int> c = a;
+	vector<int> d = b;
+	solveRect<ntt_primes[0]>(c, d, fp);
 
 	// Visualize the results
 	// The output format of solveRect is a bit odd, and it sort of reverses a and b, so be careful!
