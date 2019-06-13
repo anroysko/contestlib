@@ -4,6 +4,16 @@
 using namespace std;
 using ll = long long;
 
+template<class T>
+T itPow(const T& a, ll d, T one = 1) {
+        T r = one;
+        for (ll b = 1ll<<62; b > 0; b /= 2) {
+                if (d > b) r = r*r;
+                if (d & b) r = r*a;
+        }
+        return r;
+}
+
 template<class T=ll, T zero=0, T one=1>
 struct Matrix {
 	vector<T> mat;
@@ -22,7 +32,6 @@ struct Matrix {
 		for (int i = 0; i < n; ++i) res(i, i) = one;
 		return res;
 	}
-
 	Matrix& operator+=(const Matrix& rhs) {
 		assert(h == rhs.h && w == rhs.w);
 		for (int i = 0; i < w*h; ++i) mat[i] += rhs.mat[i];
@@ -42,15 +51,6 @@ struct Matrix {
 		}
 		return res;
 	}
-	Matrix pow(ll d) const {
-		assert(d >= 0 && w == h);
-		Matrix res = ident(w);
-		for (ll b = 1ll<<62; b > 0; b /= 2) {
-			if (d > b) res = res * res;
-			if (d & b) res = res * (*this);
-		}
-		return res;
-	}
 };
 
 // Example usage. Finds matrix power.
@@ -64,7 +64,7 @@ int main() {
 		}
 	}
 
-	auto mp = m.pow(d);
+	auto mp = itPow(m, d, m.ident(m.w));
 	for (int y = 0; y < h; ++y) {
 		for (int x = 0; x < w; ++x) {
 			cout << mp(y,x) << ' ';

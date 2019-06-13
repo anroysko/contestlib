@@ -3,6 +3,16 @@ using namespace std;
 using ll = long long;
 constexpr int MOD = 1e9 + 7;
 
+template<class T>
+T itPow(const T& a, ll d, T one = 1) {
+	T r = one;
+	for (ll b = 1ll<<62; b > 0; b /= 2) {
+		if (d > b) r = r*r;
+		if (d & b) r = r*a;
+	}
+	return r;
+}
+
 // Assumes the modulo is a prime
 template<int P=MOD>
 struct ModNum {
@@ -20,16 +30,8 @@ struct ModNum {
 	ModNum operator*(const ModNum& rhs) const {
 		return ((ll)v * rhs.v) % P;
 	}
-	ModNum pow(ll d) const {
-		ModNum r(1);
-		for (ll b = 1ll<<62; b > 0; b /= 2) {
-			if (d > b) r = r*r;
-			if (d & b) r = r*(*this);
-		}
-		return r;
-	}
 	ModNum inv() const {
-		return this->pow(P-2);
+		return itPow(*this, P-2);
 	}
 	ModNum operator/(const ModNum& rhs) const {
 		return (*this) * rhs.inv();
@@ -38,13 +40,13 @@ struct ModNum {
 };
 
 int main() {
-	int a, b;
-	cin >> a >> b;
+	int a, b, c;
+	cin >> a >> b >> c;
 	ModNum<> x = a;
 	ModNum<> y = b;
 	cout << x*y << " " << x+y << " " << x-y << '\n';
-	int c, k;
-	cin >> c >> k;
+	ll d;
+	cin >> d;
 	ModNum<> z = c;
-	cout << z.inv() << ' ' << z.pow(k) << '\n';
+	cout << z.inv() << ' ' << itPow(z, d) << '\n';
 }
