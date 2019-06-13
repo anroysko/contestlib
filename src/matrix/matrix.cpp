@@ -6,8 +6,7 @@ using ll = long long;
 
 constexpr int bLog(ll v) { return v ? 63 - __builtin_clzll(v) : 0; }
 template<class T>
-T itPow(const T& a, ll d, T one = 1) {
-        T r = one;
+T itPow(const T& a, ll d, T r = 1) {
         for (ll b = 1ll << bLog(d); b > 0; b /= 2) {
                 r = r*r;
                 if (d & b) r = r*a;
@@ -15,12 +14,13 @@ T itPow(const T& a, ll d, T one = 1) {
         return r;
 }
 
-template<class T=ll, T zero=0, T one=1>
+// Assumes 0 and 1 are 0,1 for T
+template<class T=ll>
 struct Matrix {
 	vector<T> mat;
 	int h, w;
 
-	Matrix(int height, int width) : h(height), w(width), mat(height*width, zero) {}
+	Matrix(int height, int width) : h(height), w(width), mat(height*width, 0) {}
 
 	const T& operator()(int y, int x) const {
 		return mat[x+y*w];
@@ -30,7 +30,7 @@ struct Matrix {
 	}
 	static Matrix ident(int n) {
 		Matrix res(n, n);
-		for (int i = 0; i < n; ++i) res(i, i) = one;
+		for (int i = 0; i < n; ++i) res(i, i) = 1;
 		return res;
 	}
 	Matrix& operator+=(const Matrix& rhs) {

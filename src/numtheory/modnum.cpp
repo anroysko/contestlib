@@ -5,8 +5,7 @@ constexpr int MOD = 1e9 + 7;
 
 constexpr int bLog(ll v) { return v ? 63 - __builtin_clzll(v) : 0; }
 template<class T>
-T itPow(const T& a, ll d, T one = 1) {
-        T r = one;
+T itPow(const T& a, ll d, T r = 1) {
         for (ll b = 1ll << bLog(d); b > 0; b /= 2) {
                 r = r*r;
                 if (d & b) r = r*a;
