@@ -4,10 +4,11 @@
 using namespace std;
 using ll = long long;
 
+constexpr int bLog(ll v) { return v ? 63 - __builtin_clzll(v) : 0; }
 template<class T>
 T itPow(const T& a, ll d, T one = 1) {
         T r = one;
-        for (ll b = 1ll<<62; b > 0; b /= 2) {
+        for (ll b = 1ll << bLog(d); b > 0; b /= 2) {
                 if (d > b) r = r*r;
                 if (d & b) r = r*a;
         }
