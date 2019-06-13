@@ -9,7 +9,7 @@ template<class T>
 T itPow(const T& a, ll d, T one = 1) {
         T r = one;
         for (ll b = 1ll << bLog(d); b > 0; b /= 2) {
-                if (d > b) r = r*r;
+                r = r*r;
                 if (d & b) r = r*a;
         }
         return r;
