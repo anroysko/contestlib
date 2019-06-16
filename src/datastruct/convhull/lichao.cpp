@@ -17,13 +17,11 @@ bool comp(const Line& l1, const Line& l2, ll x) {
 struct LiChao {
 	vector<Line> tree; // Tree of lines
 	vector<ll> xs; // x-coordinate of point i
-	int k = 1; // Depth of the tree
+	int k = 1; // Log-depth of the tree
 
 	void init(const vector<ll>& points) : xs(points) {
-		int n = points.size();
-		while((1<<k) <= n) ++k;
-
-		tree.resize(1 << k, {INF, 0});
+		while(points.size() >> k) ++k;
+		tree.resize(1 << k, {0, INF});
 		xs.resize(1 << k, points.back());
 	}
 	int mapInd(int j) const {
