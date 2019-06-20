@@ -51,15 +51,9 @@ int main() {
 	cin >> n;
 
 	Sieve s(n);
-	for (auto p : s.primes) cout << p << ' '; cout << '\n';
-	for (int i = 1; i <= n; ++i) cout << s.div_ind[i] << ' '; cout << '\n';
-
-	cout << "mobius: ";
-	for (int i = 1; i <= n; ++i) cout << s.mobius[i] << ' '; cout << '\n';
-	cout << "div_cou: ";
-	for (int i = 1; i <= n; ++i) cout << s.div_cou[i] << ' '; cout << '\n';
-	cout << "div_sum: ";
-	for (int i = 1; i <= n; ++i) cout << s.div_sum[i] << ' '; cout << '\n';
-	cout << "totient: ";
-	for (int i = 1; i <= n; ++i) cout << s.totient[i] << ' '; cout << '\n';
+	cout << "smallest prime divisor: " << s.primes[s.div_ind[n]] << '\n';
+	cout << "mobius function: " << s.mobius[n] << '\n';
+	cout << "divisor count: " << s.div_cou[n] << '\n';
+	cout << "divisor sum: " << s.div_sum[n] << '\n';
+	cout << "totient function: " << s.totient[n] << '\n';
 }

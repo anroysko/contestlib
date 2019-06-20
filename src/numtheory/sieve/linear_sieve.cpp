@@ -27,6 +27,5 @@ int main() {
 	vector<int> primes, div_ind;
 	tie(primes, div_ind) = sieve(n);
 
-	for (auto p : primes) cout << p << ' '; cout << '\n';
-	for (int i = 0; i <= n; ++i) cout << div_ind[i] << ' '; cout << '\n';
+	cout << "smallest divisor: " << primes[div_ind[n]] << '\n';
 }
