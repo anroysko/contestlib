@@ -3,22 +3,25 @@ using namespace std;
 using ll = long long;
 constexpr int MOD = 1e9 + 7;
 
-constexpr int bLog(ll v) { return v ? 63 - __builtin_clzll(v) : 0; }
 template<class T>
-T itPow(const T& a, ll d, T r = 1) {
-        for (ll b = 1ll << bLog(d); b > 0; b /= 2) {
-                r = r*r;
-                if (d & b) r = r*a;
-        }
-        return r;
+T itPow(T a, ll d, T r = 1) {
+	for (ll b = 1; b <= d; b <<= 1) {
+		if (d & b) r = r*a;
+		a = a*a;
+	}
+	return r;
 }
 
 // Assumes the modulo is a prime
-template<int P=MOD>
+template<int P>
 struct ModNum {
 	int v;
 
 	ModNum(int val) : v(val % P) {}
+	ModNum inv() const {
+		return itPow(*this, P-2);
+	}
+
 	ModNum operator+(const ModNum& rhs) const {
 		int res = v + rhs.v;
 		return (res >= P ? res-P : res);
@@ -30,9 +33,6 @@ struct ModNum {
 	ModNum operator*(const ModNum& rhs) const {
 		return ((ll)v * rhs.v) % P;
 	}
-	ModNum inv() const {
-		return itPow(*this, P-2);
-	}
 	ModNum operator/(const ModNum& rhs) const {
 		return (*this) * rhs.inv();
 	}
@@ -40,13 +40,16 @@ struct ModNum {
 };
 
 int main() {
+	using mint = ModNum<MOD>;
+
 	int a, b, c;
 	cin >> a >> b >> c;
-	ModNum<> x = a;
-	ModNum<> y = b;
-	cout << x*y << " " << x+y << " " << x-y << '\n';
+	mint x = a;
+	mint y = b;
+	cout << x+y << ' ' << x-y << ' ' << x*y << ' ' << x/y << '\n';
+	cout << x << ' ' << x.inv() << ' ' << x*x.inv() << '\n';
+	
 	ll d;
 	cin >> d;
-	ModNum<> z = c;
-	cout << z.inv() << ' ' << itPow(z, d) << '\n';
+	cout << itPow(x, d) << '\n';
 }
