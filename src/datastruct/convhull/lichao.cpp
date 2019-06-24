@@ -6,7 +6,7 @@ const ll INF = 1e18;
 
 struct Line {
 	ll a, b;
-	ll eval(ll x) { return a*x + b; }
+	ll eval(ll x) const { return a*x + b; }
 };
 bool comp(const Line& l1, const Line& l2, ll x) {
 	return l1.eval(x) < l2.eval(x);
@@ -19,7 +19,7 @@ struct LiChao {
 	vector<ll> xs; // x-coordinate of point i
 	int k = 1; // Log-depth of the tree
 
-	void init(const vector<ll>& points) : xs(points) {
+	LiChao(const vector<ll>& points) : xs(points) {
 		while(points.size() >> k) ++k;
 		tree.resize(1 << k, {0, INF});
 		xs.resize(1 << k, points.back());
@@ -48,7 +48,7 @@ struct LiChao {
 	ll minVal(int j) const {
 		ll res = INF;
 		for (int i = mapInd(j+1); i > 0; i /= 2) {
-			res = min(res, eval(tree[i], xs[j]));
+			res = min(res, tree[i].eval(xs[j]));
 		}
 		return res;
 	}
