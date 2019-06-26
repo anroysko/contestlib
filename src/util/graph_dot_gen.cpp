@@ -1,34 +1,48 @@
 #include <iostream>
+#include <fstream>
 #include <sstream>
+#include <vector>
 using namespace std;
 
-int main() {
-	// graph_dot_gen < graph.txt > graph.dot
-	// dot graph.dot -Tpng > graph.png
-	// xdg-open graph.png
-
-	string first_row;
-	getline(cin, first_row);
+vector<string> readTokens() {
+	string row;
+	getline(cin, row);
 	stringstream ss;
-	ss << first_row;
-	
-	int n, m;
-	ss >> n;
-	if (ss.eof()) m = n-1;
-	else ss >> m;
-	
-	cerr << "Graph with n, m = " << n << ' ' << m << "\n";
+	ss << row;
 
-	cout << "Graph G {\n";
+	vector<string> res;
+	while(! ss.eof()) {
+		string v;
+		ss >> v;
+		res.push_back(v);
+	}
+	return res;
+}
+
+int main() {
+	vector<string> nm = readTokens();
+	int n = stoi(nm[0]);
+	int m = (nm.size() == 1 ? n-1 : stoi(nm[1]));
+	
+	ofstream fout;
+	fout.open("graph.dot");
+	fout << "Graph G {\n";
 	for (int i = 0; i < n; ++i) {
-		cout << "\t" << i+1 << ";\n";
+		fout << "\t" << i+1 << ";\n";
 	}
 	for (int i = 0; i < m; ++i) {
-		int a, b;
-		cin >> a >> b;
-		cout << "\t" << a << " -- " << b << ";\n";
+		vector<string> ed = readTokens();
+		fout << "\t" << ed[0] << " -- " << ed[1];
+		if (ed.size() > 2) {
+			fout << " [label=\"";
+			for (int j = 2; j+1 < ed.size(); ++j) fout << ed[j] << ", ";
+			fout << ed.back() << "\"]";
+		}
+		fout << ";\n";
 	}
-	cout << "}\n";
+	fout << "}\n";
+	fout.close();
 
-	cerr << "To compile: dot graph.dot -Tpng > graph.png\n";
+	system("dot graph.dot -Tpng > graph.png");
+	system("xgd-open graph.png");
 }
