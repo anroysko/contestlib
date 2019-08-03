@@ -15,4 +15,5 @@ class Fenwick {
 			}
 			return res;
 		}
+		ll get(int a, int b) { return get(b) - get(a-1); }
 };
