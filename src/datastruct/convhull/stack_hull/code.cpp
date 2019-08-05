@@ -7,17 +7,17 @@ class ConvHull {
 		vector<Line> hull;
 
 		static bool redundant(const Line& x, const Line& y, const Line& z) {
-			return (y.b - z.b)*(y.a - x.a) <= (x.b - y.b)*(z.a - y.a);
+			return (x.b - y.b)*(z.a - y.a) <= (y.b - z.b)*(y.a - x.a);
 		}
 	public:
-		// Must have li.a >= pre.a for all existing lines pre
+		// Must have li.a >= pre.a for all pre in existing lines
 		void addLine(Line li) {
 			while(hull.size() >= 2 && hull.back().a < li.a) {
 				if (redundant(hull[hull.size() - 2], hull.back(), li)) hull.pop_back();
 				else break;
 			}
 			if ((! hull.empty()) && (li.a == hull.back().a)) {
-				if (li.b < hull.back().b) swap(li, hull.back());
+				if (li.b < hull.back().b) hull.back() = li;
 			} else hull.push_back(li);
 		}
 		Line minLine(ll x) const {
