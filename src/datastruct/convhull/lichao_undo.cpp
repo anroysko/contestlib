@@ -14,7 +14,7 @@ class UndoLiChao {
 			int z = __builtin_ctz(j);
 			return ((1<<(k-z)) | (j>>z)) >> 1;
 		}
-		bool comp(const Line& a, int i, int j) {
+		bool comp(const Line& a, int i, int j) const {
 			return a.eval(xs[j]) < tree[i].back().eval(xs[j]);
 		}
 	public:

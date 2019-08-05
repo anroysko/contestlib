@@ -13,7 +13,7 @@ class LiChao {
 			int z = __builtin_ctz(j);
 			return ((1<<(k-z)) | (j>>z)) >> 1;
 		}
-		bool comp(const Line& a, int i, int j) {
+		bool comp(const Line& a, int i, int j) const {
 			return a.eval(xs[j]) < tree[i].eval(xs[j]);
 		}
 	public:
