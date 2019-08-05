@@ -1,0 +1,1 @@
+TODO: convex hull with set, allowing querying at any point, and adding a line
