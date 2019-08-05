@@ -2,7 +2,7 @@ struct Line {
 	ll a, b;
 	ll eval(ll x) const { return a*x + b; }
 };
-class LiChaoUndo {
+class UndoLiChao {
 	private:
 		const static ll INF = 4e18;
 		vector<vector<Line>> tree; // Tree of lines
@@ -18,7 +18,7 @@ class LiChaoUndo {
 			return a.eval(xs[j]) < tree[i].back().eval(xs[j]);
 		}
 	public:
-		LiChaoUndo(const vector<ll>& points) : xs(points) {
+		UndoLiChao(const vector<ll>& points) : xs(points) {
 			while(points.size() >> k) ++k;
 			tree.resize(1 << k, {{0, INF}});
 			xs.resize(1 << k, points.back());

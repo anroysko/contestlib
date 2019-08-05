@@ -12,7 +12,7 @@ void solve() {
 	vector<ll> xs(n);
 	for (int i = 0; i < n; ++i) cin >> xs[i];
 
-	LiChaoUndo lc(xs);
+	UndoLiChao lc(xs);
 	for (int qi = 0; qi < q; ++qi) {
 		string q;
 		cin >> q;
