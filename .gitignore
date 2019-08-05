@@ -3,5 +3,7 @@
 !/**/
 !*.*
 
-# remove object files and such
+# remove object files, input files and output files
 *.o
+*.in
+*.out

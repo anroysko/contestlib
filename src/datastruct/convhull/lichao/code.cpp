@@ -4,7 +4,7 @@ struct Line {
 };
 class LiChao {
 	private:
-		const static ll INF = 1e18;
+		const static ll INF = 4e18;
 		vector<Line> tree; // Tree of lines
 		vector<ll> xs; // x-coordinate of point i
 		int k = 1; // Log-depth of the tree
@@ -38,7 +38,7 @@ class LiChao {
 		Line minLine(int j) const {
 			Line res = {0, INF};
 			for (int i = mapInd(j+1); i > 0; i /= 2) {
-				if (comp(res, i, j)) res = tree[i];
+				if (! comp(res, i, j)) res = tree[i];
 			}
 			return res;
 		}
