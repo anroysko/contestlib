@@ -2,9 +2,9 @@ struct Line {
 	ll a, b;
 	ll eval(ll x) const { return a*x + b; }
 };
-class UndoLiChao {
+class LiChaoUndo {
 	private:
-		const static ll INF = 1e18;
+		const static ll INF = 4e18;
 		vector<vector<Line>> tree; // Tree of lines
 		vector<ll> xs; // x-coordinate of point i
 		vector<int> lst; // last nodes modified by addLine
@@ -18,7 +18,7 @@ class UndoLiChao {
 			return a.eval(xs[j]) < tree[i].back().eval(xs[j]);
 		}
 	public:
-		LiChao(const vector<ll>& points) : xs(points) {
+		LiChaoUndo(const vector<ll>& points) : xs(points) {
 			while(points.size() >> k) ++k;
 			tree.resize(1 << k, {{0, INF}});
 			xs.resize(1 << k, points.back());
@@ -43,7 +43,7 @@ class UndoLiChao {
 		Line minLine(int j) const {
 			Line res = {0, INF};
 			for (int i = mapInd(j+1); i > 0; i /= 2) {
-				if (comp(res, i, j)) res = tree[i].back();
+				if (! comp(res, i, j)) res = tree[i].back();
 			}
 			return res;
 		}

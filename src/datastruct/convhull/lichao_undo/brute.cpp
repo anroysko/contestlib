@@ -3,7 +3,10 @@
 using namespace std;
 using ll = long long;
 
-#include "code.cpp"
+struct Line {
+	ll a, b;
+	ll eval(ll x) const { return a*x + b; }
+};
 
 void solve() {
 	int n, q;
@@ -11,19 +14,23 @@ void solve() {
 
 	vector<ll> xs(n);
 	for (int i = 0; i < n; ++i) cin >> xs[i];
-
-	LiChao lc(xs);
+	
+	vector<Line> lines;
 	for (int qi = 0; qi < q; ++qi) {
-		string q;
-		cin >> q;
-		if (q == "add_line") {
-			ll a, b; // ax + b
+		string op;
+		cin >> op;
+		if (op == "add_line") {
+			ll a, b;
 			cin >> a >> b;
-			lc.addLine({a, b});
-		} else if (q == "min_line") {
+			lines.push_back({a, b});
+		} else if (op == "min_line") {
 			int j;
 			cin >> j;
-			cout << lc.minLine(j).eval(xs[j]) << '\n';
+			ll res = lines[0].eval(xs[j]);
+			for (int i = 1; i < lines.size(); ++i) res = min(res, lines[i].eval(xs[j]));
+			cout << res << '\n';
+		} else if (op == "undo") {
+			lines.pop_back();
 		}
 	}
 }

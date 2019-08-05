@@ -3,7 +3,7 @@
 using namespace std;
 using ll = long long;
 
-#include "lichao_undo.cpp"
+#include "code.cpp"
 
 void solve() {
 	int n, q;
@@ -12,7 +12,7 @@ void solve() {
 	vector<ll> xs(n);
 	for (int i = 0; i < n; ++i) cin >> xs[i];
 
-	LiChao lc(xs);
+	LiChaoUndo lc(xs);
 	for (int qi = 0; qi < q; ++qi) {
 		string q;
 		cin >> q;
@@ -23,7 +23,7 @@ void solve() {
 		} else if (q == "min_line") {
 			int j;
 			cin >> j;
-			cout << lc.minLine(j).eval(xs[j]);
+			cout << lc.minLine(j).eval(xs[j]) << '\n';
 		} else if (q == "undo") {
 			lc.undo();
 		}
