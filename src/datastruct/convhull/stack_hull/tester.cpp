@@ -15,7 +15,7 @@ T rand(T a, T b) {
 	return uniform_int_distribution<T>(a, b)(rng);
 }
 
-const int TC = 100;
+const int TC = 1000;
 const int Q = 1000;
 const ll V1 = 1e9;
 const ll V2 = 1e9;

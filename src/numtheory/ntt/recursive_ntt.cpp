@@ -2,72 +2,67 @@
 #include <vector>
 using namespace std;
 using ll = long long;
+const int P = 998244353; // 2^21 | P-1
+const int G = 3; // 3 is a generator of P
 
-// Recursive NTT
-// Preconditions: P is prime, n > 1, n = 2^lg for some lg, 2^lg | P-1, 3 is a generator of P, P < 2^30
-// Time Complexity: O(n log(n))
-template<int P>
-void ntt(vector<int>& pol, int r) {
-	int h = pol.size()/2;
+void ntt(vector<int>& v, int x_n) {
+	int h = v.size()/2;
 	vector<int> even(h);
 	vector<int> odd(h);
 	for (int i = 0; i < h; ++i) {
-		even[i] = pol[2*i];
-		odd[i] = pol[2*i+1];
+		even[i] = v[2*i];
+		odd[i] = v[2*i+1];
 	}
 
 	if (h > 1) {
-		int rr = (ll)r*r % P;
-		ntt<P>(even, rr);
-		ntt<P>(odd, rr);
+		int x_h = (ll)x_n*x_n % P;
+		ntt(even, x_h);
+		ntt(odd, x_h);
 	}
 
-	ll mult = 1;
-	for (int i = 0; i < h; ++i, mult = mult*r % P) {
-		pol[i] = (even[i] + mult * odd[i]) % P;
-		pol[i+h] = (even[i] - mult * odd[i]) % P;
-		if (pol[i+h] < 0) pol[i+h] += P;
+	ll mult = 1; // (x_n)^i
+	for (int i = 0; i < h; ++i) {
+		v[i] = (even[i] + mult * odd[i]) % P;
+		v[i+h] = (even[i] - mult * odd[i]) % P;
+		if (v[i+h] < 0) v[i+h] += P;
+		mult = mult*x_n % P;
 	}
 }
 
-constexpr ll modPow(ll a, ll b, ll c) {
-	if ((b & 1) == 1) return a * modPow(a, b-1, c) % c;
-	if (b == 0) return 1 % c;
-	return modPow(a*a % c, b / 2, c);
+ll modPow(ll a, ll b) {
+	if (b & 1) return a * modPow(a, b-1) % P;
+	if (b == 0) return 1;
+	return modPow(a*a % P, b / 2);
 }
 
-// Calculates a * b = c (mod P) for two polynomials a and b. Assumes a[i], b[i] >= 0.
-// Time Complexity: O(n log n) where n = O(a.size() + b.size())
-template<int P>
-vector<int> polyMult(vector<int>& a, vector<int>& b) {
+vector<int> polyMult(const vector<int>& a, const vector<int>& b) {
 	int as = a.size();
 	int bs = b.size();
 	int n = 1;
 	while(n < (as + bs)) n <<= 1;
-	int r = modPow(3, (P-1)/n, P);
-	int rev_r = modPow(r, P-2, P);
-	int rev_n = modPow(n, P-2, P);
+	int x_n = modPow(G, (P-1)/n);
+	int inv_x_n = modPow(x_n, P-2);
+	int inv_n = modPow(n, P-2);
 
 	vector<int> ap (n, 0);
 	vector<int> bp (n, 0);
 	for (int i = 0; i < as; ++i) ap[i] = a[i] % P;
 	for (int i = 0; i < bs; ++i) bp[i] = b[i] % P;
 	
-	ntt<P>(ap, r);
-	ntt<P>(bp, r);
+	ntt(ap, x_n);
+	ntt(bp, x_n);
 
-	vector<int> cp (n);
-	for (int i = 0; i < n; ++i) cp[i] = ((ll)ap[i] * bp[i]) % P;
+	vector<int> cp(n);
+	for (int i = 0; i < n; ++i) {
+		ll prod = (ll)ap[i] * bp[i] % P;
+		cp[i] = prod * inv_n % P;
+	}
 
-	ntt<P>(cp, rev_r);
-	
-	vector<int> res(as + bs - 1);
-	for (int i = 0; i < res.size(); ++i) res[i] = ((ll)cp[i] * rev_n) % P;
-	return res;
+	ntt(cp, inv_x_n);
+
+	cp.resize(as + bs - 1);
+	return cp;
 }
-
-// Three primes p all of which have 2^21 | p-1. 3 is a generator for all of them.
-constexpr int ntt_primes[3] = {998244353, 1004535809, 985661441};
 
 int main() {
 	ios_base::sync_with_stdio(false);
@@ -80,6 +75,8 @@ int main() {
 	for (int i = 0; i < as; ++i) cin >> a[i];
 	for (int i = 0; i < bs; ++i) cin >> b[i];
 	
-	vector<int> ab = polyMult<ntt_primes[0]>(a, b);
-	for (int i = 0; i < ab.size(); ++i) cout << ab[i] << ' '; cout << '\n';
+	vector<int> ab = polyMult(a, b);
+	for (int i = 0; i < ab.size(); ++i) {
+		cout << ab[i] << ' '; cout << '\n';
+	}
 }

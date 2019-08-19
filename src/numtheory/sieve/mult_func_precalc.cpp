@@ -51,9 +51,18 @@ int main() {
 	cin >> n;
 
 	Sieve s(n);
+	pair<int, int> res = {0, 0};
+	for (int i = 0; i <= n; ++i) {
+		if (i % (2*3*5) == 0) continue;
+		res = max(res, {s.div_cou[i], i});
+	}
+	cout << res.first << ' ' << res.second  << '\n';
+	
+	/*
 	cout << "smallest prime divisor: " << s.primes[s.div_ind[n]] << '\n';
 	cout << "mobius function: " << s.mobius[n] << '\n';
 	cout << "divisor count: " << s.div_cou[n] << '\n';
 	cout << "divisor sum: " << s.div_sum[n] << '\n';
 	cout << "totient function: " << s.totient[n] << '\n';
+	*/
 }

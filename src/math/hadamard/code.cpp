@@ -1,5 +1,5 @@
 // res[k] = \sum_{i,j : i^j == k} a[i] b[j]
-// overflows if n res[i] overflows for some i
+// overflows if n res[i] overflows
 valarray<ll> xorTF(valarray<ll> v) {
 	for (int b = 1; b < v.size(); b *= 2) {
 		for (int i = 0; i < v.size(); ++i) {
@@ -17,7 +17,7 @@ vector<ll> xorConv(const vector<ll>& a, const vector<ll>& b, int h) {
 }
 
 // res[k] = \sum_{i,j : i&j == k} a[i] b[j]
-// overflows if res[i] overflows for some i
+// overflows if (\sum a)(\sum b) overflows
 valarray<ll> andTF(valarray<ll> v, bool inv = false) {
 	for (int b = 1; b < v.size(); b *= 2) {
 		for (int i = 0; i < v.size(); ++i) {
@@ -44,6 +44,7 @@ valarray<ll> orTF(valarray<ll> v, bool inv = false) {
 	}
 	return v;
 }
+
 vector<ll> orConv(const vector<ll>& a, const vector<ll>& b, int h) {
 	valarray<ll> res = orTF(orTF({a.data(), 1ull<<h}) * orTF({b.data(), 1ull<<h}), true);
 	return vector<ll>(begin(res), end(res));

@@ -19,6 +19,8 @@ T rand() {
 	return uniform_int_distribution<T>()(rng);
 }
 
+const int TC = 100;
+
 void genTest(ofstream& fout) {
 	// Generate and output test here
 }
@@ -32,7 +34,7 @@ int main() {
 		fout.open("test.in");
 		
 		/*
-		int t = T;
+		int t = TC;
 		fout << t << '\n';
 		for (int ti = 0; ti < t; ++ti) genTest(fout);
 		*/

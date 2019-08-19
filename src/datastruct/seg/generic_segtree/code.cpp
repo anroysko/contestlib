@@ -2,7 +2,6 @@
 // just change the functions apply ... combine, and replace 0 with your neutral element.
 class SegTree {
 	private:
-		const ll INF = 4e18;
 		vector<ll> seg;
 		vector<ll> tag;
 		int h = 1;

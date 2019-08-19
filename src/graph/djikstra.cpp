@@ -57,8 +57,8 @@ int main() {
 		int a, b, c;
 		cin >> a >> b >> c;
 		--a; --b;
-		g[a].push_back({a, b, c});
-		// g[b].push_back({a, b, c}); // uncomment if undirected
+		g[a].emplace_back(a, b, c);
+		g[b].emplace_back(a, b, c); // comment if directed
 	}
 
 	vector<ll> cost;
