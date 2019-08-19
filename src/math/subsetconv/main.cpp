@@ -15,19 +15,19 @@ void solve() {
 	for (int i = 0; i < (1<<n); ++i) cin >> f[i];
 
 	if (t == "mobius") {
-		ll r;
+		int r;
 		cin >> r;
-		auto res = mobius(n, f, r);
-		for (auto v : res) cout << v << ' '; cout << '\n';
+		mobius(f, r == -1);
+		for (auto v : f) cout << v << ' '; cout << '\n';
 	} else if (t == "tieredMobius") {
-		auto res = tieredMobius(n, f);
+		auto res = tieredMobius(f, n);
 		for (int k = 0; k <= n; ++k) {
 			for (auto v : res[k]) cout << v << ' '; cout << '\n';
 		}
 	} else if (t == "subsetConv") {
 		vector<ll> g(1<<n);
 		for (int i = 0; i < (1<<n); ++i) cin >> g[i];
-		auto res = subsetConv(n, f, g);
+		auto res = subsetConv(f, g, n);
 		for (auto v : res) cout << v << ' '; cout << '\n';
 	}
 }
