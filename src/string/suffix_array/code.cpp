@@ -1,3 +1,7 @@
+
+// Cyclic suffix array construction in O((n + mx) log n), where mx is the maximum value of any character
+// sa[i]: Position where the i'th suffix starts from, when suffixes are sorted into increasing order
+// rev[i]: Index in the sorted array of suffixes of the suffix starting at position i
 pair<vector<int>, vector<int>> suffixArray(const string& str, int mx = 256) {
 	int n = str.size();
 	vector<int> sa(n), rev(n), nsa(n), nrev(n), cou(n+mx+1);
