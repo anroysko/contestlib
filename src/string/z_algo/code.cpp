@@ -1,5 +1,5 @@
 
-// z[i] is the maximum value s.t. str[0, z[i]) = str[i, i+z[i])
+// z[i] := max_{k} s.t. str[0, k) = str[i, i+k)}
 vector<int> zAlgo(const string& str) {
 	int n = str.size();
 	vector<int> z(n, 0);
