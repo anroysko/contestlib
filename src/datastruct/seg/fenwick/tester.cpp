@@ -16,30 +16,34 @@ T rand(T a, T b) {
 }
 
 const int TC = 100;
-const int N = 1000;
-const int Q = 1000;
-const ll V = (ll)1e18 / Q;
+const int N = 10000;
+const int Q = 10000;
+const ll V = 1e18;
 
 void genTest(ofstream& fout) {
 	int n = rand(1, N);
 	int q = rand(1, Q);
+	ll v = rand(1ll, V/q);
 	fout << n << ' ' << q << '\n';
 
-	vector<string> op_types = {"add", "get"};
+	vector<string> op_types = {"add", "get", "search"};
+	int oc = op_types.size();
 	for (int qi = 0; qi < q; ++qi) {
-		int oi = rand(0, (int)op_types.size() - 1);
-		string op = op_types[oi];
+		string op = op_types[rand(0, oc-1)];
 
 		fout << op << ' ';
 		if (op == "add") {
 			int i = rand(0, n-1);
-			ll v = rand(-V, V);
-			fout << i << ' ' << v << '\n';
+			ll val = rand(0ll, v);
+			fout << i << ' ' << val << '\n';
 		} else if (op == "get") {
 			int a = rand(0, n-1);
 			int b = rand(0, n-1);
 			if (b < a) swap(a, b);
 			fout << a << ' ' << b << '\n';
+		} else if (op == "search") {
+			ll val = rand(0ll, v*q);
+			fout << val << '\n';
 		}
 	}
 }
@@ -49,13 +53,10 @@ int main() {
 		cerr << ti << ' ';
 		if (ti % 10 == 9) cerr << endl;
 
-		ofstream fout;
-		fout.open("test.in");
-		
+		ofstream fout("test.in");
 		int t = TC;
 		fout << t << '\n';
 		for (int ti = 0; ti < t; ++ti) genTest(fout);
-
 		fout.close();
 
 		bool fail = false;

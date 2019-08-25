@@ -23,6 +23,17 @@ void solve() {
 			ll res = 0;
 			for (int j = a; j <= b; ++j) res += vals[j];
 			cout << res << '\n';
+		} else if (op == "search") {
+			ll v;
+			cin >> v;
+
+			int res = -1;
+			ll sum = 0;
+			for (int j = 0; j < n; ++j) {
+				sum += vals[j];
+				if (sum <= v) res = j;
+			}
+			cout << res << '\n';
 		}
 	}
 }

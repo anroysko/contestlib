@@ -22,6 +22,10 @@ void solve() {
 			int a, b;
 			cin >> a >> b;
 			cout << fw.get(a, b) << '\n';
+		} else if (op == "search") {
+			ll v;
+			cin >> v;
+			cout << fw.search(v) << '\n';
 		}
 	}
 }
