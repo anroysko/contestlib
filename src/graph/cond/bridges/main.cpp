@@ -18,7 +18,7 @@ void solve() {
 
 	Bridges bd(g);
 	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) cout << (bd[i] == bd[j]);
+		for (int j = 0; j < n; ++j) cout << (bd.getComp(i) == bd.getComp(j));
 		cout << '\n';
 	}
 }

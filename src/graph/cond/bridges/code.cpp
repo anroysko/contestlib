@@ -62,6 +62,6 @@ class Bridges {
 			}
 		}
 		bool isBridge(int a, int b) const { return comp[a] != comp[b]; }
-		int operator[](int i) const { return comp[i]; }
+		int getComp(int i) const { return comp[i]; }
 		Graph condense() const { return getCond(cc, comp, g); }
 };
