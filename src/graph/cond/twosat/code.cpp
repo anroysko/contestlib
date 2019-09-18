@@ -47,7 +47,7 @@ class TwoSat {
 		const int n;
 		Graph g; // Implication graph, of size 2*n
 	public:
-		TwoSat(int nodes) : n(nodes), g(2*nodes) {}
+		TwoSat(int var_cou) : n(var_cou), g(2*var_cou) {}
 		int neg(int i) { return i >= n ? i-n : i+n; }
 
 		void addClause(int a, int b) {
