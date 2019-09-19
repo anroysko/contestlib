@@ -8,8 +8,10 @@ using ll = long long;
 void solve() {
 	int n, q;
 	cin >> n >> q;
+	vector<ll> ini(n);
+	for (int i = 0; i < n; ++i) cin >> ini[i];
 
-	RangeMin<ll> rm(vector<ll>(n, 0));
+	RangeMin<ll> rm(ini);
 	for (int qi = 0; qi < q; ++qi) {
 		string op;
 		cin >> op;
@@ -22,6 +24,12 @@ void solve() {
 			ll v;
 			cin >> i >> v;
 			rm.set(i, v);
+		} else if (op == "find") {
+			int i;
+			ll v;
+			cin >> i >> v;
+			cout << rm.find(i, v) << '\n';
+
 		}
 	}
 }
