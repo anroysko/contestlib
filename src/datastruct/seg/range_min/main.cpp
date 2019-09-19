@@ -24,11 +24,11 @@ void solve() {
 			ll v;
 			cin >> i >> v;
 			rm.set(i, v);
-		} else if (op == "find") {
+		} else if (op == "search") {
 			int i;
 			ll v;
 			cin >> i >> v;
-			cout << rm.find(i, v) << '\n';
+			cout << rm.search(i, v) << '\n';
 
 		}
 	}

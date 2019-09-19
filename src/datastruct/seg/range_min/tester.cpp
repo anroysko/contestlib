@@ -26,7 +26,7 @@ void genTest(ofstream& fout) {
 	fout << n << ' ' << q << '\n';
 	for (int i = 0; i < n; ++i) fout << rand(-V, V) << ' '; fout << '\n';
 
-	vector<string> op_types = {"get", "set", "find"};
+	vector<string> op_types = {"get", "set", "search"};
 	for (int qi = 0; qi < q; ++qi) {
 		int oi = rand(0, (int)op_types.size() - 1);
 		string op = op_types[oi];
@@ -41,7 +41,7 @@ void genTest(ofstream& fout) {
 			int i = rand(0, n-1);
 			ll v = rand(-V, V);
 			fout << i << ' ' << v << '\n';
-		} else if (op == "find") {
+		} else if (op == "esarch") {
 			int i = rand(0, n);
 			ll v = rand(-V, V);
 			fout << i << ' ' << v << '\n';

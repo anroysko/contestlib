@@ -23,7 +23,7 @@ void solve() {
 			ll v;
 			cin >> i >> v;
 			vals[i] = v;
-		} else if (op == "find") {
+		} else if (op == "search") {
 			int i;
 			ll v;
 			cin >> i >> v;

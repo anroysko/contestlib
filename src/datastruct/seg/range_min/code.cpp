@@ -13,13 +13,15 @@ class RangeMin {
 			for (int i = 0; i < n; ++i) seg[i+n] = v[i];
 			for (int i = n-1; i > 0; --i) seg[i] = min(seg[2*i], seg[2*i+1]);
 		}
-		int find(int a, T v) const {
+
+		// Returns smallest i >= a s.t. val[i] <= v, or n if there is none
+		int search(int a, T v) const {
 			int b = 2*n, r = 2*n;
 			for (a += n; a < b; a=(a+1)/2, b /= 2) {
 				if ((a & 1) && seg[a] <= v) return recf(a, v);
 				if ((b & 1) && seg[b-1] <= v) r = b-1;
 			}
-			return recf(r, v); // first i >= a s.t. v[i] <= v
+			return recf(r, v);
 		}
 		T get(int a, int b) const {
 			T res = seg[a + n]; // Change to INF to allow a > b
