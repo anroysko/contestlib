@@ -1,8 +1,8 @@
 // Segment tree for range addition, setting, sum, minimum and maximum
 class SegTree {
 	private:
-		vector<ll> neut = {0, 4*(ll)1e18, -4*(ll)1e18};
-		vector<vector<ll>> seg;
+		const array<ll, 3> neut = {0, 4*(ll)1e18, -4*(ll)1e18};
+		array<vector<ll>, 3> seg;
 		vector<ll> tag, tag_t;
 		int h = 1;
 
@@ -77,7 +77,9 @@ class SegTree {
 	public:
 		SegTree(int n) {
 			while(h < n) h *= 2;
-			seg.resize(neut.size(), vector<ll>(2*h, 0));
+			for (int j = 0; j < seg.size(); ++j) {
+				seg[j].resize(2*h, 0);
+			}
 			tag.resize(h, 0);
 			tag_t.resize(h, -1);
 		}
