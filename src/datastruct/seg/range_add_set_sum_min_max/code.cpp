@@ -1,31 +1,32 @@
 // Segment tree for range addition, setting, sum, minimum and maximum
 class SegTree {
 	private:
-		const array<ll, 3> neut = {0, 4*(ll)1e18, -4*(ll)1e18};
-		array<vector<ll>, 3> seg;
+		const array<ll, 3> NEUT = {0, 4*(ll)1e18, -4*(ll)1e18};
+		const array<ll, 3> INI = {0, 0, 0};
+		vector<array<ll, 3>> seg;
 		vector<ll> tag, tag_t;
 		int h = 1;
 
 		void apply(int t, int i, ll v) {
 			if (t == 0) {
-				seg[0][i] += v * len(i);
-				seg[1][i] += v;
-				seg[2][i] += v;
+				seg[i][0] += v * len(i);
+				seg[i][1] += v;
+				seg[i][2] += v;
 				if (i < h) {
 					if (tag_t[i] == -1) tag_t[i] = 0;
 					tag[i] += v;
 				}
 			} else if (t == 1) {
-				seg[0][i] = v * len(i);
-				seg[1][i] = v;
-				seg[2][i] = v;
+				seg[i][0] = v * len(i);
+				seg[i][1] = v;
+				seg[i][2] = v;
 				if (i < h) {
 					tag_t[i] = 1;
 					tag[i] = v;
 				}
 			}
 		}
-		ll combine(int t, ll a, ll b) {
+		static ll combine(int t, ll a, ll b) {
 			if (t == 0) return a + b;
 			else if (t == 1) return min(a, b);
 			else return max(a, b);
@@ -36,27 +37,23 @@ class SegTree {
 		// #################
 
 		// Returns length of interval corresponding to position i
-		ll len(int i) { return h >> (31 - __builtin_clz(i)); }
+		int len(int i) { return h >> (31 - __builtin_clz(i)); }
 
 		void push(int i) {
-			int t = tag_t[i];
-			if (t == -1) return;
-
-			apply(t, 2*i, tag[i]);
-			apply(t, 2*i+1, tag[i]);
-
+			apply(tag_t[i], 2*i, tag[i]);
+			apply(tag_t[i], 2*i+1, tag[i]);
 			tag_t[i] = -1;
 			tag[i] = 0;
 		}
 		void update(int i) {
-			for (int t = 0; t < seg.size(); ++t) {
-				seg[t][i] = combine(t, seg[t][2*i], seg[t][2*i+1]);
+			for (int t = 0; t < INI.size(); ++t) {
+				seg[i][t] = combine(t, seg[2*i][t], seg[2*i+1][t]);
 			}
 		}
 
 		ll recGet(int t, int a, int b, int i, int ia, int ib) {
-			if (ib <= a || b <= ia) return neut[t];
-			if (a <= ia && ib <= b) return seg[t][i];
+			if (ib <= a || b <= ia) return NEUT[t];
+			if (a <= ia && ib <= b) return seg[i][t];
 			push(i);
 			int im = (ia + ib) >> 1;
 			return combine(t,
@@ -77,9 +74,7 @@ class SegTree {
 	public:
 		SegTree(int n) {
 			while(h < n) h *= 2;
-			for (int j = 0; j < seg.size(); ++j) {
-				seg[j].resize(2*h, 0);
-			}
+			seg.resize(2*h, INI);
 			tag.resize(h, 0);
 			tag_t.resize(h, -1);
 		}
