@@ -18,7 +18,7 @@ T rand(T a, T b) {
 const int TC = 100;
 const int N = 1000;
 const int Q = 1000;
-const ll V = (ll)1e18 / (N*Q);
+const ll V = (ll)1e18 / ((ll)N*Q);
 
 void genTest(ofstream& fout) {
 	int n = rand(1, N);
