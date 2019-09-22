@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <valarray>
 using namespace std;
 using ll = long long;
 
@@ -15,9 +14,9 @@ void solve() {
 	for (int i = 0; i < n; ++i) cin >> a[i];
 	for (int i = 0; i < n; ++i) cin >> b[i];
 
-	vector<ll> c1 = xorConv(a, b, h);
-	vector<ll> c2 = andConv(a, b, h);
-	vector<ll> c3 = orConv(a, b, h);
+	vector<ll> c1 = xorConv(a, b);
+	vector<ll> c2 = andConv(a, b);
+	vector<ll> c3 = orConv(a, b);
 	for (int i = 0; i < n; ++i) cout << c1[i] << ' '; cout << '\n';
 	for (int i = 0; i < n; ++i) cout << c2[i] << ' '; cout << '\n';
 	for (int i = 0; i < n; ++i) cout << c3[i] << ' '; cout << '\n';
