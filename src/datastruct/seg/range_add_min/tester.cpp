@@ -15,9 +15,9 @@ T rand(T a, T b) {
 	return uniform_int_distribution<T>(a, b)(rng);
 }
 
-const int TC = 1000;
-const int N = 100;
-const int Q = 100;
+const int TC = 100;
+const int N = 1000;
+const int Q = 1000;
 const ll V = (ll)1e18 / Q;
 
 void genTest(ofstream& fout) {
@@ -25,7 +25,7 @@ void genTest(ofstream& fout) {
 	int q = rand(1, Q);
 	fout << n << ' ' << q << '\n';
 
-	vector<string> op_types = {"add", "min"};
+	vector<string> op_types = {"add", "min", "find"};
 	for (int qi = 0; qi < q; ++qi) {
 		int oi = rand(0, (int)op_types.size() - 1);
 		string op = op_types[oi];
@@ -37,7 +37,7 @@ void genTest(ofstream& fout) {
 
 		if (op == "min") {
 			fout << '\n';
-		} else if (op == "add") {
+		} else if (op == "add" || op == "find") {
 			ll v = rand(-V, V);
 			fout << ' ' << v << '\n';
 		}

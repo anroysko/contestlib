@@ -22,6 +22,16 @@ void solve() {
 			ll res = 4 * (ll)1e18;
 			for (int i = a; i <= b; ++i) res = min(res, vals[i]);
 			cout << res << '\n';
+		} else if (op == "find") {
+			int a, b;
+			ll v;
+			cin >> a >> b >> v;
+
+			int i = a;
+			for (i = a; i <= b; ++i) {
+				if (vals[i] <= v) break;
+			}
+			cout << i << '\n';
 		}
 	}
 }

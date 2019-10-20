@@ -37,6 +37,17 @@ class SegTree {
 				seg[i] = combine(seg[2*i], seg[2*i+1]);
 			}
 		}
+		int recFind(int a, int b, ll v, int i, int ia, int ib) {
+			if (seg[i] > v) return b;
+			if (b <= ia || ib <= a) return b;
+			if (ib == ia + 1) return ia;
+
+			push(i);
+			int im = (ia + ib) >> 1;
+			int off = recFind(a, b, v, 2*i, ia, im);
+			if (off < b) return off;
+			else return recFind(a, b, v, 2*i+1, im, ib);
+		}
 	public:
 		SegTree(int n) {
 			while(h < n) h *= 2;
@@ -45,4 +56,5 @@ class SegTree {
 		}
 		ll rangeMin(int a, int b) { return recGet(a, b+1, 1, 0, h); }
 		void rangeAdd(int a, int b, ll v) { recApply(a, b+1, v, 1, 0, h); }
+		int findNext(int a, int b, ll v) { return recFind(a, b+1, v, 1, 0, h); }
 };

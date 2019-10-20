@@ -22,6 +22,11 @@ void solve() {
 			int a, b;
 			cin >> a >> b;
 			cout << seg.rangeMin(a, b) << '\n';
+		} else if (op == "find") {
+			int a, b;
+			ll v;
+			cin >> a >> b >> v;
+			cout << seg.findNext(a, b, v) << '\n';
 		}
 	}
 }
