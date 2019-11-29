@@ -9,7 +9,7 @@ constexpr ll modPow(ll a, ll b, ll c) {
 		: (b ? modPow(a*a % c, b/2, c) : 1);
 }
 
-// Struct for precalculating factorials, inverse factorials and nCr
+// Struct for precalculating factorials, inverse factorials and nCr in O(n) precalculation and O(1) queries
 template<int P>
 struct FactPrecalc {
 	private:
