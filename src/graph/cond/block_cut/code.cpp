@@ -28,8 +28,9 @@ pair<int, int> dfsBC(int i, vector<int>& dep, vector<vector<int>>& ans, const ve
 	return res;
 }
 
-// Returns a tree s.t. x is on the path between y and x if and only if
-// x is on every path between y and z in the input graph.
+// Given connected undirected graph, returns a tree s.t. x is on the path
+// between y and z in the tree iff x is on every path between y and z in the input graph.
+// A vertex is a cut vertex iff it has degree >= 2 in the tree.
 // The tree has size <= |E| + 1. Complexity O(|E|)
 vector<vector<int>> blockCut(const vector<vector<int>>& g) {
 	vector<vector<int>> res(g.size());
