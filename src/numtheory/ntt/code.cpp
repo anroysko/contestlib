@@ -1,4 +1,3 @@
-
 // Wrapped to a single line for constexpr support
 constexpr ll mAdd(ll a, ll b, ll c) {
 	return (a+b >= c ? a+b-c : a+b);
@@ -23,8 +22,7 @@ void ntt(vector<int>& vec, bool inv) {
 		}
 		if (i < t) swap(vec[i], vec[t]);
 	}
-
-	// Do NTT
+	// Do Cooley-Tukey
 	int root = modPow(3, (inv ? (n-1) : 1) * (ll)(P-1) / n, P);
 	for (int h = 1; h < n; h <<= 1) {
 		ll mult = modPow(root, n / (2*h), P);
@@ -58,15 +56,9 @@ vector<int> polyMult(vector<int> a, vector<int> b) {
 	return c;
 }
 
-
 // parallelised Garner's algorithm https://cp-algorithms.com/algebra/chinese-remainder-theorem.html
 // complexity: O(n |p|^2), where n is the size of the vectors in y
 vector<int> crt(vector<vector<int>> y, const vector<int>& p, int m) {
-	// a = x[0] + x[1] p[0] + ... + x[n-1] p[0] ... p[n-2]
-	// we know a = y[i] (mod p[i])
-	// -> x[i] = ( ... ((y[i] - x[0]) * p[0]^{-1} - x[1]) * ...) * p[i-1]^{-1} (mod p[i])
-	// At i'th iteration of the loop we replace y[i] with x[i]
-
 	for (int i = 0; i < p.size(); ++i) {
 		for (int j = 0; j < i; ++j) {
 			ll inv = modPow(p[j], p[i]-2, p[i]);
@@ -86,22 +78,14 @@ vector<int> crt(vector<vector<int>> y, const vector<int>& p, int m) {
 	return res;
 }
 
-// Primes p for all of which 3 is a generator and 2^20 | p-1.
-constexpr int NTTP[5] = {1004535809, 1092616193, 1161822209, 998244353, 985661441};
-
-// Does polymult for arbitrary modulo that is at most 10^9 + 7
+// Does polymult for arbitrary modulo. Assumes 0 <= a[i], b[i] < p <= NTTP[0]
 vector<int> polyMultMod(const vector<int>& a, const vector<int>& b, int p) {
+	// Primes p for all of which 3 is a generator and 2^20 | p-1.
+	constexpr int NTTP[3] = {1004535809, 1092616193, 1161822209};
+
 	vector<vector<int>> vecs(3);
 	vecs[0] = polyMult<NTTP[0]>(a, b);
 	vecs[1] = polyMult<NTTP[1]>(a, b);
 	vecs[2] = polyMult<NTTP[2]>(a, b);
-
-	/*
-	cerr << "polyMultMod:\n";
-	for (int j = 0; j < 3; ++j) {
-		cerr << NTTP[j] << ": "; for (auto v : vecs[j]) cerr << v << ' '; cerr << '\n';
-	}
-	*/
-
 	return crt(vecs, {NTTP[0], NTTP[1], NTTP[2]}, p);
 }
