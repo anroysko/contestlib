@@ -1,0 +1,32 @@
+
+
+\sum_{i = 0}^{n-1} r^{i} i^{k} in O(k^2) time
+f(x) = \sum_{i = 0}^{\infty} e^{ix} r^{i}
+= -1 / (r e^{x} - 1)
+
+f^{k}(x) = P_{k}(r e^{x}) / (r e^{x} - 1)^{k+1}
+P_{0}(y) = 1
+
+d/dx (r e^{x} - 1)^{k+1} = (k+1) r e^{x} (r e^{x} - 1)^{k}
+d/dx f(x) / g(x) = (g(x) f'(x) - f(x) g'(x)) / g(x)^2
+
+d/dx f^{k}(x)
+= ((r e^{x} P'_{k}(r e^{x}) (r e^{x} - 1)^{k+1}) - (P_{k}(r e^{x}) (k+1) r e^{x} (r e^{x} - 1)^{k})) / (r e^{x} - 1)^{2k+2}
+= y (P'_{k}(y) (y - 1) - (k+1) P_{k}(y)) / (y - 1)^{k+2}
+= P_{k+1}(r e^{x}) / (r e^{x} - 1)^{k+2}
+
+-> P_{k+1}(x) = -x(k+1) P_{k}(x) - (x - x^2) P'_{k}(x)
+P_{0} = 1
+P_{1} = -x
+P_{2} = x^2 + x
+P_{3} = -(x^3 + 4x^2 + x)
+...
+P_{k} = ...
+
+Then: \sum_{i = 0}^{\infty} e^{ix} r^{i} i^{k} = f^{k}(x) = P_{k}(r e^{x}) / (r e^{x} - 1)^{k+1}
+So \sum_{i = 0}^{\infty} r^{i} i^{k} = f^{k}(0) = P_{k}(r) / (r - 1)^{k}
+
+Define g(k) = \sum_{i = 0}^{\infty} r^{i} i^{k} = P_{k}(r) / (r - 1)^{k}
+(i+n)^{k} = \sum_{j = 0}^{k} i^{j} n^{k-j} (k choose j)
+Hence res = \sum_{i = 0}^{n} r^{i} i^{k}
+	= g(k) - \sum_{j = 0}^{k} n^{j} (k choose j) g(j)
