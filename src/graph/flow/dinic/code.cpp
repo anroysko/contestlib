@@ -1,13 +1,8 @@
-#include <iostream>
-#include <vector>
-using namespace std;
-using ll = long long;
-
 // Dinic's algorithm for max flow
 // Source must be node 0, sink must be node n-1
 // All edges are directed
 // O(V^2 E) in general
-// O(min(V^{2/3}, sqrt{E}) E) in graphs with unit capacities
+// O(min(V^{2/3}, E^1/2) E) in graphs with unit capacities
 // O(sqrt{V} E) in unit networks (e.g. bipartite matching)
 class Dinic {
 	private:
@@ -86,22 +81,3 @@ class Dinic {
 			return res;
 		}
 };
-
-// Example usage
-int main() {
-	int n, m;
-	cin >> n >> m;
-
-	Dinic dinic(n, 0, n-1);
-
-	for (int i = 0; i < m; ++i) {
-		int a, b;
-		ll c;
-		cin >> a >> b >> c;
-		--a; --b;
-		dinic.addEdge(a, b, c);
-	}
-	
-	ll flow = dinic.pushFlow();
-	cout << "Total flow: " << flow << '\n';
-}
