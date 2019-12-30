@@ -6,10 +6,11 @@ class SegTree {
 		vector<ll> tag;
 		int h = 1;
 
-		static pair<ll, ll> combine(ll x, pair<ll, ll> a, pair<ll, ll> b) {
-			if (a.first == b.first) return {a.first + x, a.second + b.second};
-			else if (a.first < b.first) return {a.first + x, a.second};
-			else return {b.first + x, b.second};
+		static pair<ll, ll> combine(ll x, const pair<ll, ll>& a, const pair<ll, ll>& b) {
+			auto res = min(a, b);
+			res.first += x;
+			if (a.first == b.first) res.second += max(a, b).second;
+			return res;
 		}
 		void apply(int i, ll v) {
 			seg[i].first += v;
