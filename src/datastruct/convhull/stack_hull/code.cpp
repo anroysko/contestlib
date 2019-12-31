@@ -10,9 +10,9 @@ class ConvHull {
 			return (x.b - y.b)*(z.a - y.a) <= (y.b - z.b)*(y.a - x.a);
 		}
 	public:
-		// Must have li.a >= pre.a for all pre in existing lines
+		// lines must be added in order of nonincreasing a
 		void addLine(Line li) {
-			while(hull.size() >= 2 && hull.back().a < li.a) {
+			while(hull.size() >= 2 && hull.back().a <= li.a) {
 				if (redundant(hull[hull.size() - 2], hull.back(), li)) hull.pop_back();
 				else break;
 			}
