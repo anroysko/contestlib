@@ -1,11 +1,7 @@
-#include <iostream>
-#include <unordered_map>
-#include <ext/pb_ds/assoc_container.hpp>
 #include <chrono>
-using namespace std;
+#include <ext/pb_ds/assoc_container.hpp>
 using namespace __gnu_pbds;
-typedef long long ll;
-typedef unsigned long long ull;
+using ull = unsigned long long;
 const ull FIXED_RANDOM = chrono::steady_clock::now().time_since_epoch().count();
 
 // https://codeforces.com/blog/entry/62393
@@ -23,30 +19,5 @@ struct CustomHash {
 	}
 };
 
-int main() {
-	// With input 1000000 100 1337 696969
-	// std: 18.109
-	// pbds: 3.482s
-	unordered_map<ll, int, CustomHash> tab1;
-	gp_hash_table<ll, int, CustomHash> tab2;
-	
-	ll n, k, a, b;
-	cin >> n >> k >> a >> b;
-	
-	for (int i = 0; i < n; ++i) {
-		// tab1[(i*a)^b] = i;
-		tab2[(i*a)^b] = i;
-	}
-	for (int j = 0; j < k; ++j) {
-		for (int i = 0; i < n; ++i) {
-			// ++tab1[(i*a)^b];
-			++tab2[(i*a)^b];
-		}
-	}
-	ll res = 0;
-	for (int i = 0; i < n; ++i) {
-		// res += tab1[(i*a)^b];
-		res += tab2[(i*a)^b];
-	}
-	cout << res << '\n';
-}
+// unordered_map<ll, int, CustomHash> tab1;
+// gp_hash_table<ll, int, CustomHash> tab2;
