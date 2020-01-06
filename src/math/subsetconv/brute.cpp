@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <array>
+#include <bitset>
 using namespace std;
 using ll = long long;
 
@@ -29,30 +31,51 @@ vector<vector<ll>> tieredMobius(int n, const vector<ll>& f) {
 	return res; // res[k][m]: \sum_{s \subset m, |s| = k} f[s]
 }
 
+const int N = 10;
+const int M = 1 << N;
+
 void solve() {
 	string t;
 	cin >> t;
 
-	int n;
-	cin >> n;
-	vector<ll> f(1<<n);
-	for (int i = 0; i < (1<<n); ++i) cin >> f[i];
+	if (t == "binaryConv") {
+		string x, y;
+		cin >> x >> y;
 
-	if (t == "mobius") {
-		ll r;
-		cin >> r;
-		auto res = mobius(n, f, r);
-		for (auto v : res) cout << v << ' '; cout << '\n';
-	} else if (t == "tieredMobius") {
-		auto res = tieredMobius(n, f);
-		for (int k = 0; k <= n; ++k) {
-			for (auto v : res[k]) cout << v << ' '; cout << '\n';
+		bitset<M> f, g;
+		for (int i = 0; i < M; ++i) f[i] = (x[i] == '1');
+		for (int i = 0; i < M; ++i) g[i] = (y[i] == '1');
+
+		bitset<M> fg;
+		for (int m = 0; m < M; ++m) {
+			fg[m] = f[0] & g[m];
+			for (int j = m; j; j = (j-1) & m) {
+				if (f[j] & g[m^j]) fg[m] = 1 - fg[m];
+			}
 		}
-	} else if (t == "subsetConv") {
-		vector<ll> g(1<<n);
-		for (int i = 0; i < (1<<n); ++i) cin >> g[i];
-		auto res = subsetConv(n, f, g);
-		for (auto v : res) cout << v << ' '; cout << '\n';
+		cout << fg << '\n';
+	} else {
+		int n;
+		cin >> n;
+
+		vector<ll> f(1<<n);
+		for (int i = 0; i < (1<<n); ++i) cin >> f[i];
+		if (t == "mobius") {
+			ll r;
+			cin >> r;
+			auto res = mobius(n, f, r);
+			for (auto v : res) cout << v << ' '; cout << '\n';
+		} else if (t == "tieredMobius") {
+			auto res = tieredMobius(n, f);
+			for (int k = 0; k <= n; ++k) {
+				for (auto v : res[k]) cout << v << ' '; cout << '\n';
+			}
+		} else if (t == "subsetConv") {
+			vector<ll> g(1<<n);
+			for (int i = 0; i < (1<<n); ++i) cin >> g[i];
+			auto res = subsetConv(n, f, g);
+			for (auto v : res) cout << v << ' '; cout << '\n';
+		}
 	}
 }
 

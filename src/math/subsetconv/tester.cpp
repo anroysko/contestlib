@@ -17,29 +17,35 @@ T rand(T a, T b) {
 
 const int TC = 100;
 const int N = 10;
+const int M = 1 << N;
 const ll V1 = 1e9;
 const ll V2 = 1e18;
 
 void genTest(ofstream& fout) {
-	vector<string> op_types = {"mobius", "tieredMobius", "subsetConv"};
+	vector<string> op_types = {"mobius", "tieredMobius", "subsetConv", "binaryConv"};
 	string t = op_types[rand(0, (int)op_types.size() - 1)];
 	fout << t << '\n';
 
-	int n = rand(1, N);
-	fout << n << '\n';
+	if (t == "binaryConv") {
+		for (int i = 0; i < M; ++i) fout << rand(0, 1); fout << '\n';
+		for (int i = 0; i < M; ++i) fout << rand(0, 1); fout << '\n';
+	} else {
+		int n = rand(1, N);
+		fout << n << '\n';
 
-	if (t == "mobius") {
-		ll r = rand(0, 1) ? -1 : 1;
-		ll v = V2 >> (n-1);
-		for (int i = 0; i < (1<<n); ++i) fout << rand(-v, v) << ' '; fout << '\n';
-		fout << r << '\n';
-	} else if (t == "tieredMobius") {
-		ll v = V2 >> (n-1);
-		for (int i = 0; i < (1<<n); ++i) fout << rand(-v, v) << ' '; fout << '\n';
-	} else if (t == "subsetConv") {
-		ll v = V1 >> (n-1);
-		for (int i = 0; i < (1<<n); ++i) fout << rand(-v, v) << ' '; fout << '\n';
-		for (int i = 0; i < (1<<n); ++i) fout << rand(-v, v) << ' '; fout << '\n';
+		if (t == "mobius") {
+			ll r = rand(0, 1) ? -1 : 1;
+			ll v = V2 >> (n-1);
+			for (int i = 0; i < (1<<n); ++i) fout << rand(-v, v) << ' '; fout << '\n';
+			fout << r << '\n';
+		} else if (t == "tieredMobius") {
+			ll v = V2 >> (n-1);
+			for (int i = 0; i < (1<<n); ++i) fout << rand(-v, v) << ' '; fout << '\n';
+		} else if (t == "subsetConv") {
+			ll v = V1 >> (n-1);
+			for (int i = 0; i < (1<<n); ++i) fout << rand(-v, v) << ' '; fout << '\n';
+			for (int i = 0; i < (1<<n); ++i) fout << rand(-v, v) << ' '; fout << '\n';
+		}
 	}
 }
 
