@@ -39,10 +39,9 @@ class MinCostCirc {
 		vector<vector<int>> g;
 		vector<ll> p; // potential
 
-		ll pushFlow(int ei, ll f) {
+		void pushFlow(int ei, ll f) {
 			edges[ei].u -= f;
 			edges[ei ^ 1].u += f;
-			return edges[ei].c * f;
 		}
 
 		vector<int> djikstra(PriQue& que, vector<ll>& dist) {
@@ -88,41 +87,70 @@ class MinCostCirc {
 			djikstra(que, dist);
 			for (int i = 0; i < n; ++i) p[i] += dist[i]; // |p[i] + dist[i]| <= nC
 		}
+		ll incEdge(int ei, ll h) {
+			ll res = 0;
+			Edge& ed = edges[ei];
+			if (ed.u) ed.u += h;
+			else {
+				int s = edges[ei ^ 1].t;
+				auto pre = updatePotentials(ed.t);
+				ed.u += h;
+
+				res = min(res, ed.c + p[s] - p[ed.t]);
+				cerr << ed.c << ' ' << p[s] << ' ' << p[ed.t] << '\n';
+				if (res < 0) {
+					pre[ed.t] = ei;
+					for (int i = s; ed.u > 0;) {
+						pushFlow(pre[i], h);
+						i = edges[pre[i] ^ 1].t;
+					}
+				}
+				fixPotentials();
+			}
+			return res;
+		}
 	public:
 		MinCostCirc(int nc) : n(nc), g(nc), p(nc, 0) {}
 		
-		void addEdge(int s, int t, ll u, ll c) {
+		int addEdge(int s, int t, ll u, ll c) {
 			int i = edges.size();
 			edges.emplace_back(t, u, c);
 			edges.emplace_back(s, 0, -c);
 			g[s].push_back(i);
 			g[t].push_back(i^1);
+			return i >> 1;
 		}
 		
-		ll solve() {
+		// Finds min-cost circulation in O(m^2 log U log n)
+		ll minCostCirc() {
 			ll res = 0;
 			for (ll h = 1ll << 62; h > 0; h >>= 1) {
 				for (int ei = 0; ei < edges.size(); ++ei) {
-					Edge& ed = edges[ei];
-					if (! (ed.ru & h)) continue;
-					if (ed.u) ed.u += h;
-					else {
-						int s = edges[ei ^ 1].t;
-						auto bp = updatePotentials(ed.t);
-						ed.u += h;
-
-						if (ed.c + p[s] - p[ed.t] < 0) {
-							bp[ed.t] = ei;
-							for (int i = s; ed.u > 0;) {
-								res += pushFlow(bp[i], h);
-								i = edges[bp[i] ^ 1].t;
-							}
-						}
-						fixPotentials();
-					}
+					if (edges[ei].ru & h) res += incEdge(ei, h);
 				}
 			}
 			return res;
 		}
+
+		// Finds min-cost maximum flow in O(nm + Fm log n) time (where F is the flow amount), assuming there are no negative-weight cycles
+		pair<int, ll> minCostFlow(int so, int si) {
+			for (auto& ed : edges) ed.u = ed.ru;
+			for (int round = 0; round < n; ++round) {
+				for (int ei = 0; ei < edges.size(); ++ei) {
+					if (! edges[ei].u) continue;
+					p[edges[ei].t] = min(p[edges[ei].t], p[edges[ei ^ 1].t] + edges[ei].c);
+				}
+			}
+			int sse = 2 * addEdge(si, so, INF, -INF);
+
+			ll off = 0;
+			pair<int, ll> res = {0, 0};
+			while(true) {
+				off = incEdge(sse, 1);
+				if (off >= 0) return res;
+				else res = {res.first + 1, res.second + off + INF};
+			}
+		}
+
 		ll flow(int ei) const { return edges[2*ei ^ 1].u; }
 };
