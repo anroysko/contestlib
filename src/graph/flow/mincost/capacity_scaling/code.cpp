@@ -1,12 +1,12 @@
 // Struct for priority queue operations on index set [1, n]
 // push(i, v) overwrites value at position i if one already exists
 // decKey is faster but requires that the new key is smaller than the old one
-struct Prique {
+struct PriQue {
 	const ll INF = 4 * (ll)1e18;
 	vector<pair<ll, int>> data;
 	const int n;
 
-	Prique(int siz) : n(siz), data(2*siz, {INF, -1}) { data[0] = {-INF, -1}; }
+	PriQue(int siz) : n(siz), data(2*siz, {INF, -1}) { data[0] = {-INF, -1}; }
 	void push(int i, ll v) {
 		data[i+n] = {v, (v >= INF ? -1 : i)};
 		for (i += n; i > 1; i >>= 1) data[i>>1] = min(data[i], data[i^1]);
@@ -27,55 +27,50 @@ struct Prique {
 class MinCostCirc {
 	private:
 		struct Edge {
-			const int s, t; // from, to
-			const ll u, c; // capacity, cost
-			ll cu = 0, f = 0; // current capacity, flow
-
-			Edge(int src, int tar, ll cap, ll cost)
-				: s(src), t(tar), u(cap), c(cost) {}
+			const int t; // other endpoint
+			const ll ru, c; // real capacity, cost
+			ll u = 0; // capacity
+			Edge(int tar, ll cap, ll cost) : t(tar), ru(cap), c(cost) {}
 		};
 
+		const ll INF = (ll)1e18; // must be > nC
 		const int n;
 		vector<Edge> edges;
-		vector<vector<Edge>> g;
+		vector<vector<int>> g;
 		vector<ll> p; // potential
-		ll max_u = 0, max_c = 0; // Maximum edge capacity and absolute cost
 
-		// Returns {other endpoint of edge, capacity in that direction, modified cost in that direction}
-		tuple<int, ll, ll> getEdge(int i, const Edge& ed) const {
-			if (i == ed.s) return {ed.t, ed.cu-ed.f, ed.c + p[ed.s] - p[ed.t]};
-			else return {ed.s, ed.f, ed.c + p[ed.t] - p[ed.s]};
+		ll pushFlow(int ei, ll f) {
+			edges[ei].u -= f;
+			edges[ei ^ 1].u += f;
+			return edges[ei].c * f;
 		}
 
 		vector<int> djikstra(PriQue& que, vector<ll>& dist) {
 			vector<int> pre(p.size(), -1);
-			for (int i = que.pop().second; i != -1; i = que.pop().second) {
+			while(true) {
+				int i = que.pop().second;
+				if (i == -1) return pre;
 				for (int ei : g[i]) {
-					int t;
-					ll u, c;
-					tie(t, u, c) = getEdge(i, edges[ei]);
-					if (u > 0 && dist[i] + c < dist[t]) {
-						pre[t] = ei;
-						dist[t] = dist[i] + c;
-						que.decKey(t, dist[i] + c);
+					Edge& ed = edges[ei];
+					ll off = dist[i] + (ed.c + p[i] - p[ed.t]);
+					if (ed.u && off < dist[ed.t]) {
+						pre[ed.t] = ei;
+						dist[ed.t] = off;
+						que.decKey(ed.t, off);
 					}
 				}
 			}
-			return pre;
 		}
 
 		// Updates potentials to ensure that no negative cost arcs form when we push flow along the cycle
-		// If potentials are at most M, they are at most 3M + nC afterwards.
 		vector<int> updatePotentials(int s) {
 			PriQue que(n);
 			vector<ll> dist(n, INF);
 			dist[s] = 0;
 			que.decKey(s, 0);
+
 			auto res = djikstra(que, dist);
-			
-			ll max_add = 0;
-			for (auto v : dist) max_add = max(max_add, (v < INF ? v : 0));
-			for (int i = 0; i < n; ++i) p[i] += min(max_add + max_c, dist[i]);
+			for (int i = 0; i < n; ++i) p[i] += dist[i];
 			return res;
 		}
 
@@ -87,30 +82,41 @@ class MinCostCirc {
 			PriQue que(n);
 			vector<ll> dist(n);
 			for (int i = 0; i < n; ++i) {
-				dist[i] -= p[i];
+				dist[i] = -p[i];
 				que.decKey(i, dist[i]);
 			}
 			djikstra(que, dist);
 			for (int i = 0; i < n; ++i) p[i] += dist[i]; // |p[i] + dist[i]| <= nC
 		}
 	public:
-		/*
-		MinCostCirc(int n, int s, int t) {}
-		void addEdge() {} // update max_u
-		*/
+		MinCostCirc(int nc) : n(nc), g(nc), p(nc, 0) {}
+		
+		void addEdge(int s, int t, ll u, ll c) {
+			int i = edges.size();
+			edges.emplace_back(t, u, c);
+			edges.emplace_back(s, 0, -c);
+			g[s].push_back(i);
+			g[t].push_back(i^1);
+		}
 		
 		ll solve() {
 			ll res = 0;
-			for (ll h = 1ll << (63 - __builtin_clzll(max_u)); h > 0; h >>= 1) {
+			for (ll h = 1ll << 62; h > 0; h >>= 1) {
 				for (int ei = 0; ei < edges.size(); ++ei) {
 					Edge& ed = edges[ei];
-					if (! (ed.u & h)) continue;
-					if (ed.f < ed.cu) ed.cu |= h;
+					if (! (ed.ru & h)) continue;
+					if (ed.u) ed.u += h;
 					else {
-						updatePotentials(ed.t);
-						ed.cu |= h;
-						if (p[ed.s] - p[ed.t] + ed.c < 0) {
-							
+						int s = edges[ei ^ 1].t;
+						auto bp = updatePotentials(ed.t);
+						ed.u += h;
+
+						if (ed.c + p[s] - p[ed.t] < 0) {
+							bp[ed.t] = ei;
+							for (int i = s; ed.u > 0;) {
+								res += pushFlow(bp[i], h);
+								i = edges[bp[i] ^ 1].t;
+							}
 						}
 						fixPotentials();
 					}
@@ -118,5 +124,5 @@ class MinCostCirc {
 			}
 			return res;
 		}
-		ll getFlow(int ei) const { return edges[ei].f; }
+		ll flow(int ei) const { return edges[2*ei ^ 1].u; }
 };
