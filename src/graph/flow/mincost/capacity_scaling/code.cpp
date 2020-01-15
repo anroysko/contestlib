@@ -5,7 +5,7 @@ struct PriQue {
 	const ll INF = 4 * (ll)1e18;
 	vector<pair<ll, int>> data;
 	const int n;
-
+ 
 	PriQue(int siz) : n(siz), data(2*siz, {INF, -1}) { data[0] = {-INF, -1}; }
 	void push(int i, ll v) {
 		data[i+n] = {v, (v >= INF ? -1 : i)};
@@ -20,7 +20,7 @@ struct PriQue {
 		return res;
 	}
 };
-
+ 
 // Capacity scaling algorithm for min cost circulation
 // To solve minimum cost flow, add an edge from sink to source with cost -nC
 // Complexity: O(m^2 log U log n), Space: O(m)
@@ -32,23 +32,19 @@ class MinCostCirc {
 			ll u = 0; // capacity
 			Edge(int tar, ll cap, ll cost) : t(tar), ru(cap), c(cost) {}
 		};
-
+ 
 		const ll INF = (ll)1e18; // must be > nC
 		const int n;
 		vector<Edge> edges;
 		vector<vector<int>> g;
-		vector<ll> p; // potential
-
-		void pushFlow(int ei, ll f) {
-			edges[ei].u -= f;
-			edges[ei ^ 1].u += f;
-		}
-
-		vector<int> djikstra(PriQue& que, vector<ll>& dist) {
-			vector<int> pre(p.size(), -1);
+		vector<ll> p, dist; // potential
+		vector<int> pre;
+		PriQue que;
+ 
+		void djikstra() {
 			while(true) {
 				int i = que.pop().second;
-				if (i == -1) return pre;
+				if (i == -1) break;
 				for (int ei : g[i]) {
 					Edge& ed = edges[ei];
 					ll off = dist[i] + (ed.c + p[i] - p[ed.t]);
@@ -59,49 +55,44 @@ class MinCostCirc {
 					}
 				}
 			}
+			for (int i = 0; i < n; ++i) p[i] += dist[i];
 		}
-
+ 
 		// Updates potentials to ensure that no negative cost arcs form when we push flow along the cycle
-		vector<int> updatePotentials(int s) {
-			PriQue que(n);
-			vector<ll> dist(n, INF);
+		void updatePotentials(int s) {
+			for (ll& v : dist) v = INF;
 			dist[s] = 0;
 			que.decKey(s, 0);
-
-			auto res = djikstra(que, dist);
-			for (int i = 0; i < n; ++i) p[i] += dist[i];
-			return res;
+			djikstra();
 		}
-
+ 
 		// Fixes potentials to range [-nC, nC]
 		// Add auxiliary node with distance -p[i] to node i, and apply p[i] += dist[i]
 		// Note that -nC <= dist[i] + p[i] <= nC for all i at every point in the algorithm
 		// No negative-weight cycles -> distances exist. Then p[t] <= p[i] + c, hence p[i] - p[t] + c >= 0
 		void fixPotentials() {
-			PriQue que(n);
-			vector<ll> dist(n);
 			for (int i = 0; i < n; ++i) {
 				dist[i] = -p[i];
 				que.decKey(i, dist[i]);
 			}
-			djikstra(que, dist);
-			for (int i = 0; i < n; ++i) p[i] += dist[i]; // |p[i] + dist[i]| <= nC
+			djikstra();
 		}
+
 		ll incEdge(int ei, ll h) {
 			ll res = 0;
 			Edge& ed = edges[ei];
 			if (ed.u) ed.u += h;
 			else {
 				int s = edges[ei ^ 1].t;
-				auto pre = updatePotentials(ed.t);
+				updatePotentials(ed.t);
 				ed.u += h;
-
+ 
 				res = min(res, ed.c + p[s] - p[ed.t]);
-				cerr << ed.c << ' ' << p[s] << ' ' << p[ed.t] << '\n';
 				if (res < 0) {
 					pre[ed.t] = ei;
 					for (int i = s; ed.u > 0;) {
-						pushFlow(pre[i], h);
+						edges[pre[i]].u -= h; // push flow
+						edges[pre[i] ^ 1].u += h;
 						i = edges[pre[i] ^ 1].t;
 					}
 				}
@@ -110,7 +101,7 @@ class MinCostCirc {
 			return res;
 		}
 	public:
-		MinCostCirc(int nc) : n(nc), g(nc), p(nc, 0) {}
+		MinCostCirc(int nc) : n(nc), g(nc), p(nc, 0), dist(n), pre(n), que(n) {}
 		
 		int addEdge(int s, int t, ll u, ll c) {
 			int i = edges.size();
@@ -120,6 +111,7 @@ class MinCostCirc {
 			g[t].push_back(i^1);
 			return i >> 1;
 		}
+		ll edgeFlow(int ei) const { return edges[2*ei ^ 1].u; }
 		
 		// Finds min-cost circulation in O(m^2 log U log n)
 		ll minCostCirc() {
@@ -131,7 +123,7 @@ class MinCostCirc {
 			}
 			return res;
 		}
-
+ 
 		// Finds min-cost maximum flow in O(nm + Fm log n) time (where F is the flow amount), assuming there are no negative-weight cycles
 		pair<int, ll> minCostFlow(int so, int si) {
 			for (auto& ed : edges) ed.u = ed.ru;
@@ -142,7 +134,7 @@ class MinCostCirc {
 				}
 			}
 			int sse = 2 * addEdge(si, so, INF, -INF);
-
+ 
 			ll off = 0;
 			pair<int, ll> res = {0, 0};
 			while(true) {
@@ -151,6 +143,4 @@ class MinCostCirc {
 				else res = {res.first + 1, res.second + off + INF};
 			}
 		}
-
-		ll flow(int ei) const { return edges[2*ei ^ 1].u; }
 };
