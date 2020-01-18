@@ -27,13 +27,11 @@ struct PriQue {
 class MinCostCirc {
 	private:
 		struct Edge {
-			const int t; // other endpoint
-			const ll ru, c; // real capacity, cost
-			ll u = 0; // capacity
-			Edge(int tar, ll cap, ll cost) : t(tar), ru(cap), c(cost) {}
+			int t; // other endpoint
+			ll ru, c, u; // real capacity, cost, capacity
 		};
  
-		const ll INF = (ll)1e18; // must be > nC
+		const ll INF = (ll)1e18; // must be greater than 2nC
 		const int n;
 		vector<Edge> edges;
 		vector<vector<int>> g;
@@ -67,9 +65,6 @@ class MinCostCirc {
 		}
  
 		// Fixes potentials to range [-nC, nC]
-		// Add auxiliary node with distance -p[i] to node i, and apply p[i] += dist[i]
-		// Note that -nC <= dist[i] + p[i] <= nC for all i at every point in the algorithm
-		// No negative-weight cycles -> distances exist. Then p[t] <= p[i] + c, hence p[i] - p[t] + c >= 0
 		void fixPotentials() {
 			for (int i = 0; i < n; ++i) {
 				dist[i] = -p[i];
@@ -78,26 +73,23 @@ class MinCostCirc {
 			djikstra();
 		}
 
+		// Increases capacity of the edge by h
 		ll incEdge(int ei, ll h) {
-			ll res = 0;
 			Edge& ed = edges[ei];
-			if (ed.u) ed.u += h;
-			else {
-				int s = edges[ei ^ 1].t;
-				updatePotentials(ed.t);
-				ed.u += h;
+			if (ed.u == 0) updatePotentials(ed.t);
+			ed.u += h;
  
-				res = min(res, ed.c + p[s] - p[ed.t]);
-				if (res < 0) {
-					pre[ed.t] = ei;
-					for (int i = s; ed.u > 0;) {
-						edges[pre[i]].u -= h; // push flow
-						edges[pre[i] ^ 1].u += h;
-						i = edges[pre[i] ^ 1].t;
-					}
+			int s = edges[ei ^ 1].t;
+			ll res = h * min(0ll, (ed.c + p[s] - p[ed.t]));
+			if (res < 0) {
+				pre[ed.t] = ei;
+				for (int i = s; ed.u > 0;) {
+					edges[pre[i]].u -= h; // push flow
+					edges[pre[i] ^ 1].u += h;
+					i = edges[pre[i] ^ 1].t;
 				}
-				fixPotentials();
 			}
+			if (ed.u <= h) fixPotentials();
 			return res;
 		}
 	public:
@@ -105,8 +97,8 @@ class MinCostCirc {
 		
 		int addEdge(int s, int t, ll u, ll c) {
 			int i = edges.size();
-			edges.emplace_back(t, u, c);
-			edges.emplace_back(s, 0, -c);
+			edges.push_back({t, u, c, 0});
+			edges.push_back({s, 0, -c, 0});
 			g[s].push_back(i);
 			g[t].push_back(i^1);
 			return i >> 1;
