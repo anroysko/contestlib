@@ -6,14 +6,14 @@ using ll = long long;
 #include "code.cpp"
 
 void solve() {
-	int n, m, p;
-	cin >> n >> m >> p;
+	int n, m;
+	cin >> n >> m;
 
 	vector<int> a(n), b(m);
 	for (int& v : a) cin >> v;
 	for (int& v : b) cin >> v;
 
-	vector<int> c = polyMultMod(a, b, p);
+	vector<int> c = polyMult<NTTP[0]>(a, b);
 	for (auto v : c) cout << v << ' '; cout << '\n';
 }
 

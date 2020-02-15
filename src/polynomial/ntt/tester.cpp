@@ -17,16 +17,15 @@ T rand(T a, T b) {
 
 const int TC = 100;
 const int N = 1000;
-const int P = (int)1e9 + 7;
+const int P = 998244353;
 
 void genTest(ofstream& fout) {
 	int n = rand(1, N);
 	int m = rand(1, N);
-	int p = rand(2, P);
-	fout << n << ' ' << m << ' ' << p << '\n';
+	fout << n << ' ' << m << '\n';
 
-	for (int i = 0; i < n; ++i) fout << rand(0, p-1) << ' '; fout << '\n';
-	for (int i = 0; i < m; ++i) fout << rand(0, p-1) << ' '; fout << '\n';
+	for (int i = 0; i < n; ++i) fout << rand(0, P-1) << ' '; fout << '\n';
+	for (int i = 0; i < m; ++i) fout << rand(0, P-1) << ' '; fout << '\n';
 }
 
 int main() {

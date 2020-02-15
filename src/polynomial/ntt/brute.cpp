@@ -2,12 +2,13 @@
 #include <vector>
 using namespace std;
 using ll = long long;
+const ll MOD = 998244353;
 
 #include "code.cpp"
 
 void solve() {
-	int n, m, p;
-	cin >> n >> m >> p;
+	int n, m;
+	cin >> n >> m;
 
 	vector<int> a(n), b(m);
 	for (int& v : a) cin >> v;
@@ -16,7 +17,7 @@ void solve() {
 	vector<int> c(n+m-1, 0);
 	for (int i = 0; i < n; ++i) {
 		for (int j = 0; j < m; ++j) {
-			c[i+j] = (c[i+j] + (ll)a[i] * b[j]) % p;
+			c[i+j] = (c[i+j] + (ll)a[i] * b[j]) % MOD;
 		}
 	}
 	for (auto v : c) cout << v << ' '; cout << '\n';
