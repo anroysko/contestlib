@@ -8,22 +8,37 @@ using ll = long long;
 #include "../div/code.cpp"
 #include "code.cpp"
 
-void solve() {
-	int n, m;
-	cin >> n >> m;
-
-	vector<int> pol(n), xs(m);
-	for (int& v : pol) cin >> v;
-	for (int& v : xs) cin >> v;
-
-	for (int i = 0; i < m; ++i) {
+void eval(vector<int>& pol, vector<int>& xs) {
+	for (int i = 0; i < xs.size(); ++i) {
 		ll res = 0;
-		for (int j = n-1; j >= 0; --j) {
+		for (int j = (int)pol.size() - 1; j >= 0; --j) {
 			res = (res * xs[i] + pol[j]) % NTTP[0];
 		}
 		cout << res << ' ';
 	}
 	cout << '\n';
+}
+
+void solve() {
+	int t;
+	cin >> t;
+	if (t == 0) {
+		int n, m;
+		cin >> n >> m;
+
+		vector<int> pol(n), xs(m);
+		for (int& v : pol) cin >> v;
+		for (int& v : xs) cin >> v;
+		eval(pol, xs);
+	} else {
+		int n, z, k;
+		cin >> n >> z >> k;
+		
+		vector<int> pol(n), xs(k);
+		for (int& v : pol) cin >> v;
+		for (int i = 0; i < k; ++i) xs[i] = modPow(z, i, NTTP[0]);
+		eval(pol, xs);
+	}
 }
 
 int main() {

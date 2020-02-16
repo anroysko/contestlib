@@ -9,15 +9,28 @@ using ll = long long;
 #include "code.cpp"
 
 void solve() {
-	int n, m;
-	cin >> n >> m;
+	int t;
+	cin >> t;
+	if (t == 0) {
+		int n, m;
+		cin >> n >> m;
 
-	vector<int> pol(n), xs(m);
-	for (int& v : pol) cin >> v;
-	for (int& v : xs) cin >> v;
+		vector<int> pol(n), xs(m);
+		for (int& v : pol) cin >> v;
+		for (int& v : xs) cin >> v;
 
-	vector<int> vals = multiPointEval<NTTP[0]>(pol, xs);
-	for (auto v : vals) cout << v << ' '; cout << '\n';
+		auto vals = multiPointEval<NTTP[0]>(pol, xs);
+		for (auto v : vals) cout << v << ' '; cout << '\n';
+	} else {
+		int n, z, k;
+		cin >> n >> z >> k;
+
+		vector<int> pol(n);
+		for (int& v : pol) cin >> v;
+
+		auto vals = chirpzEval<NTTP[0]>(pol, z, k);
+		for (auto v : vals) cout << v << ' '; cout << '\n';
+	}
 }
 
 int main() {

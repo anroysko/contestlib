@@ -21,12 +21,23 @@ const int M = 1000;
 const int P = 998244353;
 
 void genTest(ofstream& fout) {
-	int n = rand(1, N);
-	int m = rand(1, M);
-	fout << n << ' ' << m << '\n';
+	int t = rand(0, 1);
+	fout << t << '\n';
+	if (t == 0) {
+		int n = rand(1, N);
+		int m = rand(1, M);
+		fout << n << ' ' << m << '\n';
 
-	for (int i = 0; i < n; ++i) fout << rand(0, P-1) << ' '; fout << '\n';
-	for (int i = 0; i < m; ++i) fout << rand(0, P-1) << ' '; fout << '\n';
+		for (int i = 0; i < n; ++i) fout << rand(1, P-1) << ' '; fout << '\n';
+		for (int i = 0; i < m; ++i) fout << rand(1, P-1) << ' '; fout << '\n';
+	} else {
+		int n = rand(1, N);
+		int z = rand(1, P);
+		int k = rand(1, M);
+		fout << n << ' ' << z << ' ' << k << '\n';
+
+		for (int i = 0; i < n; ++i) fout << rand(1, P-1) << ' '; fout << '\n';
+	}
 }
 
 int main() {
