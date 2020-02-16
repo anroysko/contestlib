@@ -7,7 +7,7 @@ vector<int> inverse(const vector<int>& pol, int n) {
 	vector<int> inv = {1}, cur = {1};
 	for (int h = 1; h < n; h <<= 1) {
 		cur.resize(2*h, 0);
-		for (int i = h; i < min(2*h, pol.size()); ++i) cur[i] = pol[i];
+		for (int i = h; i < 2*h && i < pol.size(); ++i) cur[i] = pol[i];
 		vector<int> prod = polyMult<P>(cur, inv);
 
 		vector<int> high(h);
@@ -15,7 +15,7 @@ vector<int> inverse(const vector<int>& pol, int n) {
 		high = polyMult<P>(high, inv);
 
 		inv.resize(2*h);
-		for (int i = 0; i < h; ++i) inv[i+h] = high[i];
+		for (int i = 0; i < h; ++i) inv[i+h] = mSub(0, high[i], P);
 	}
 	inv.resize(n);
 	return inv;
@@ -24,10 +24,12 @@ vector<int> inverse(const vector<int>& pol, int n) {
 // Finds a such that p = aq + b for some b, deg(b) < deg(q). q must be monic (highest degree term has multiplier 1)
 template<int P>
 vector<int> polyDiv(vector<int> p, vector<int> q) {
+	int deg = (int)p.size() - (int)q.size();
 	reverse(p.begin(), p.end());
 	reverse(q.begin(), q.end());
-	vector<int> rqi = inverse(q, (int)p.size() - (int)q.size());
+	vector<int> rqi = inverse<P>(q, deg + 1);
 	vector<int> ra = polyMult<P>(rqi, p);
+	ra.resize(deg + 1);
 	reverse(ra.begin(), ra.end());
 	return ra;
 }
