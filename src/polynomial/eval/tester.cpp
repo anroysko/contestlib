@@ -32,9 +32,10 @@ void genTest(ofstream& fout) {
 		for (int i = 0; i < m; ++i) fout << rand(1, P-1) << ' '; fout << '\n';
 	} else {
 		int n = rand(1, N);
-		int z = rand(1, P);
+		int a = rand(1, P);
+		int b = rand(1, P);
 		int k = rand(1, M);
-		fout << n << ' ' << z << ' ' << k << '\n';
+		fout << n << ' ' << a << ' ' << b << ' ' << k << '\n';
 
 		for (int i = 0; i < n; ++i) fout << rand(1, P-1) << ' '; fout << '\n';
 	}

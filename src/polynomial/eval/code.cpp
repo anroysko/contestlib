@@ -32,13 +32,13 @@ vector<int> calcSquares(ll z, int n) {
 	return res;
 }
 
-// Evaluates P(1), P(z), ..., P(z^(k-1)) in O((n+k) log (n+k))
+// Evaluates P(a), P(ab), ..., P(ab^(k-1)) in O((n+k) log (n+k))
 template<int P>
-vector<int> chirpzEval(vector<int> pol, int z, int k) {
+vector<int> chirpzEval(vector<int> pol, int a, int b, int k) {
 	int n = pol.size();
 	int r = (k-1) / 2;
-	auto sq = calcSquares<P>(z, max(r+1, n)); // sq[i] = z^{i^2}
-	auto inv = calcSquares<P>(modPow(z, P-2, P), max(r+1, n)); // z^{-i^2}
+	auto sq = calcSquares<P>(b, max(r+1, n)); // sq[i] = b^{i^2}
+	auto inv = calcSquares<P>(modPow(b, P-2, P), max(r+1, n)); // b^{-i^2}
 
 	vector<int> v(n), u(n+r);
 	for (int i = 0; i < n; ++i) v[i] = (ll)pol[i] * sq[i] % P;
@@ -46,17 +46,16 @@ vector<int> chirpzEval(vector<int> pol, int z, int k) {
 
 	vector<int> res(k);
 	for (int p = 0; p <= 1; ++p) {
-		// Calculate P(z^p), P(z^{2+p}), ..., P(z^{2r + p})
-		// P(z^{2j + p}) = \sum_i a_i z^{(2j+p)i} = z^{j^2} \sum_i (a_i z^{ip + i^2}) (z^{-(j-i)^{2}})
-		// since z^{(2j+p)i} = z^{j^2} z^{ip + i^{2}} z^{-(j-i)^{2}}
-		auto prod = polyMult<P>(v, u);
-		for (int j = 0; 2*j+p < k; ++j) res[2*j+p] = (ll)sq[j] * prod[n-1+j] % P;
-
 		ll cur = 1;
 		for (int i = 0; i < n; ++i) {
-			v[i] = cur * v[i] % P; // multiply by z^{ip}
-			cur = cur * z % P;
+			v[i] = cur * v[i] % P; // Multiply in a^i or b^i
+			cur = cur * (p ? b : a) % P;
 		}
+		// Calculate P(ab^p), P(ab^{2+p}), ..., P(ab^{2r + p})
+		// P(ab^{2j + p}) = \sum_i m_i a^i b^{(2j+p)i} = b^{j^2} \sum_i (a_i a^i b^{ip} b^{i^2}) (b^{-(j-i)^{2}})
+		// since b^{(2j+p)i} = b^{j^2} b^{ip + i^{2}} b^{-(j-i)^{2}}
+		auto prod = polyMult<P>(v, u);
+		for (int j = 0; 2*j+p < k; ++j) res[2*j+p] = (ll)sq[j] * prod[n-1+j] % P;
 	}
 	return res;
 }

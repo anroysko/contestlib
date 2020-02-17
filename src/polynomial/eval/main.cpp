@@ -22,13 +22,13 @@ void solve() {
 		auto vals = multiPointEval<NTTP[0]>(pol, xs);
 		for (auto v : vals) cout << v << ' '; cout << '\n';
 	} else {
-		int n, z, k;
-		cin >> n >> z >> k;
+		int n, a, b, k;
+		cin >> n >> a >> b >> k;
 
 		vector<int> pol(n);
 		for (int& v : pol) cin >> v;
 
-		auto vals = chirpzEval<NTTP[0]>(pol, z, k);
+		auto vals = chirpzEval<NTTP[0]>(pol, a, b, k);
 		for (auto v : vals) cout << v << ' '; cout << '\n';
 	}
 }

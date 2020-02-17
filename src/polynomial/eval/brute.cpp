@@ -31,12 +31,12 @@ void solve() {
 		for (int& v : xs) cin >> v;
 		eval(pol, xs);
 	} else {
-		int n, z, k;
-		cin >> n >> z >> k;
+		int n, a, b, k;
+		cin >> n >> a >> b >> k;
 		
 		vector<int> pol(n), xs(k);
 		for (int& v : pol) cin >> v;
-		for (int i = 0; i < k; ++i) xs[i] = modPow(z, i, NTTP[0]);
+		for (int i = 0; i < k; ++i) xs[i] = (ll)a * modPow(b, i, NTTP[0]) % NTTP[0];
 		eval(pol, xs);
 	}
 }
