@@ -36,6 +36,6 @@ vector<vector<int>> blockCut(const vector<vector<int>>& g) {
 	vector<vector<int>> res(g.size());
 	vector<int> dep(g.size(), -1);
 	dep[0] = 0;
-	dfsCD(0, dep, res, g);
+	dfsBC(0, dep, res, g);
 	return res;
 }
