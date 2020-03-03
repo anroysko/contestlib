@@ -29,30 +29,19 @@ class HLD {
 			int x = 0;
 			dfs2(r, x, g);
 		}
-		// Returns intervals corresponding to the path between a and b in descending order
-		vector<pair<int, int>> path(int a, int b) const {
-			vector<pair<int, int>> res;
-			for (;; b = par[cmp[b]]) {
-				if (ind[b] < ind[a]) swap(a, b);
-				if (ind[cmp[b]] <= ind[a]) {
-					res.push_back({ind[a], ind[b]});
-					return res;
-				}
-				res.push_back({ind[cmp[b]], ind[b]});
-			}
-		}
-		// Returns interval corresponding to the subtree of node i
-		pair<int, int> subtree(int i) const {
-			return {ind[i], ind[i] + siz[i] - 1};
-		}
 		int lca(int a, int b) const {
 			for (;; b = par[cmp[b]]) {
 				if (ind[b] < ind[a]) swap(a, b);
 				if (ind[cmp[b]] <= ind[a]) return a;
 			}
 		}
+		pair<int, int> subtree(int i) const {
+			return {ind[i], ind[i] + siz[i] - 1};
+		}
 		int dist(int a, int b) const {
-			return dep[a] + dep[b] - 2 * dep[lca(a, b)];
+			if (ind[a] > ind[b]) swap(a, b);
+			if (ind[a] + siz[a] > ind[b]) return dep[b] - dep[a];
+			else return dep[a] + dep[b] - 2 * dep[lca(a, b)];
 		}
 
 		// Builds the tree induced by the given vertices
@@ -64,45 +53,35 @@ class HLD {
 			for (int j = 0; j < m; ++j) ord[j] = {ind[v[j]], j};
 			sort(ord.begin(), ord.end());
 
-			vector<int> sta;
-			vector<vector<pair<int, int>>> g(m);
-			for (auto pr : ord) {
-				int t = pr.second;
-				if (! sta.empty()) {
-					int x = lca(v[sta.back()], v[t]);
-					while(dep[x] < dep[v[sta.back()]]) {
-						int i = sta.back();
-						sta.pop_back();
-						if (sta.empty() || dep[v[sta.back()]] < x) {
-							sta.push_back(v.size());
-							v.push_back(x);
-						}
-						int j = sta.back();
-						int d = dep[v[i]] - dep[v[j]];
-						g[i].emplace_back(j, d);
-						g[j].emplace_back(i, d);
-					}
+			for (int j = 0; j+1 < m; ++j) {
+				int x = lca(v[ord[j].second], v[ord[j+1].second]);
+				ord.emplace_back(ind[x], -(x+1));
+			}
+			sort(ord.begin(), ord.end());
+			
+			vector<int> act;
+			for (int j = (int)ord.size() - 1; j >= 0; --j) {
+				if (j+1 < ord.size() && ord[j+1].first == ord[j].first) continue;
+				if (ord[j].second < 0) {
+					if (j == 0) continue;
+					v.push_back(-ord[j].second - 1);
+					ord[j].second = (int)v.size() - 1;
 				}
-				sta.push_back(t);
+				act.push_back(ord[j].second);
 			}
-			// Clean up: pop rest of stack, and possibly remove LCA
-			while(sta.size() > 1) {
-				int i = sta.back();
-				sta.pop_back();
-				int j = sta.back();
-				int d = dep[v[i]] - dep[v[j]];
-				g[i].emplace_back(j, d);
-				g[j].emplace_back(i, d);
-			}
-			if (sta[0] >= m && g[sta[0]].size() == 2) {
-				int k = sta[0];
-				int i = g[k][0].first;
-				int j = g[k][1].first;
-				int d = g[k][0].second + g[k][1].second;
-				g[i].emplace_back(j, d);
-				g[j].emplace_back(i, d);
-				v.erase(v.begin() + k);
-				g.erase(g.begin() + k);
+			reverse(act.begin(), act.end());
+
+			vector<int> sta;
+			vector<vector<pair<int, int>>> g(act.size());
+			for (auto j : act) {
+				while(sta.size() > 1 && subtree(v[sta.back()]).second < ind[v[j]]) sta.pop_back();
+				if (! sta.empty()) {
+					int i = sta.back();
+					int d = dist(v[i], v[j]);
+					g[i].emplace_back(j, d);
+					g[j].emplace_back(i, d);
+				}
+				sta.push_back(j);
 			}
 			return g;
 		}
