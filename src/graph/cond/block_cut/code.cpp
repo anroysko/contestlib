@@ -1,7 +1,6 @@
-void addEdge(int a, int b, vector<vector<int>>& g) {
-	if (a < 0 || b < 0) return;
-	g[a].push_back(b);
-	g[b].push_back(a);
+void addEdge(int i, int j, vector<vector<int>>& ans) {
+	ans[i].push_back(j);
+	ans[j].push_back(i);
 }
 
 pair<int, int> dfsBC(int i, int p, vector<int>& dep, vector<vector<int>>& ans, const vector<vector<int>>& g) {
@@ -13,7 +12,7 @@ pair<int, int> dfsBC(int i, int p, vector<int>& dep, vector<vector<int>>& ans, c
 	for (auto t : g[i]) {
 		auto sub = dfsBC(t, i, dep, ans, g);
 		res = min(res, sub.first);
-		addEdge(sub.second, t + g.size(), ans);
+		if (sub.second != -1) addEdge(sub.second, t + g.size(), ans);
 	}
 	return {res, p + g.size() * (res < dep[p])};
 }
