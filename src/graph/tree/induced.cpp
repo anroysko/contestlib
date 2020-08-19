@@ -3,8 +3,7 @@ class HLD {
 		vector<int> par, siz, cmp, ind, dep;
 
 		int dfs1(int i, vector<vector<int>>& g) {
-			for (auto& t : g[i]) {
-				if (t == par[i]) continue;
+			for (auto& t : g[i]) if (t != par[i]) {
 				par[t] = i;
 				dep[t] = dep[i] + 1;
 				siz[i] += dfs1(t, g);
@@ -15,8 +14,7 @@ class HLD {
 		void dfs2(int i, int& x, const vector<vector<int>>& g) {
 			ind[i] = x;
 			++x;
-			for (auto t : g[i]) {
-				if (t == par[i]) continue;
+			for (auto t : g[i]) if (t == par[i]) {
 				cmp[t] = (x == ind[i]+1 ? cmp[i] : t);
 				dfs2(t, x, g);
 			}
