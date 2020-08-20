@@ -1,83 +1,73 @@
+
 // Dinic's algorithm for max flow
-// Source must be node 0, sink must be node n-1
 // All edges are directed
 // O(V^2 E) in general
 // O(min(V^{2/3}, E^1/2) E) in graphs with unit capacities
 // O(sqrt{V} E) in unit networks (e.g. bipartite matching)
 class Dinic {
 	private:
-		constexpr static ll INF = 8*(ll)1e18;
+		const static ll INF = 8*(ll)1e18;
 		struct Edge {
-			const int s, t;
-			const ll c; // capacity
-			ll f; // flow
-
-			Edge(int src, int tar, ll cap = INF, bool dir = 1)
-				: s(src), t(tar), c(dir ? cap : 2*cap), f(dir ? 0 : cap) {}
-
-			int getOth(int i) { return i == s ? t : s; }
-			ll getCap(int i) { return i == s ? c - f : f; }
-			void push(int i, ll am) { f += (i == s ? am : -am); }
+			const int t; // Endpoint
+			const ll c; // Capacity
+			ll a; // Admissible flow
+			Edge(int tar, ll cap = INF) : t(tar), c(cap), a(cap) {}
 		};
 
-		const int source, sink, n;
 		vector<Edge> edges;
 		vector<vector<int>> conns;
-		vector<int> dist;
-		vector<bool> done;
-		
-		bool calcDists() {
-			for (int i = 0; i < n; ++i) dist[i] = n;
+		vector<int> dist, act_ind;
+
+		ll push(int ei, ll v) {
+			edges[ei].a -= v;
+			edges[ei ^ 1].a += v;
+			return v;
+		}
+		void calcDists(int sink) {
+			for (int& v : dist) v = -1;
 			dist[sink] = 0;
 			vector<int> que = {sink};
 			for (int j = 0; j < que.size(); ++j) {
-				int i = que[j];
-				for (auto ei : conns[i]) {
-					int t = edges[ei].getOth(i);
-					if (edges[ei].getCap(t) == 0) continue;
-					if (dist[t] == n) {
-						dist[t] = dist[i] + 1;
+				for (auto ei : conns[que[j]]) {
+					int t = edges[ei].t;
+					if (edges[ei^1].a > 0 && dist[t] == -1) {
+						dist[t] = dist[que[j]] + 1;
 						que.push_back(t);
 					}
 				}
 			}
-			return dist[source] < n;
 		}
-		ll dfsFlow(int i, ll cap = INF) {
-			if (i == sink) return cap;
-			ll res = 0;
-			for (auto ei : conns[i]) {
-				int t = edges[ei].getOth(i);
-				if (done[t] || dist[t] != dist[i] - 1) continue;
+		ll dfsFlow(int i, int sink, ll cap) {
+			if (i == sink) return 0;
+			for (int& j = act_ind[i]; j < conns[i].size(); ++j) {
+				int ei = conns[i][j];
+				int t = edges[ei].t;
+				if (dist[t] != dist[i] - 1 || edges[ei].a == 0) continue;
 
-				ll subcap = min(cap-res, edges[ei].getCap(i));
-				if (subcap == 0) {
-					if (cap == res) return res;
-				} else {
-					ll add = dfsFlow(t, subcap);
-					res += add;
-					edges[ei].push(i, add);
-				}
+				ll subcap = min(cap, edges[ei].a);
+				cap -= push(ei, subcap - dfsFlow(t, sink, subcap));
+				if (! cap) return 0;
 			}
-			if (res < cap) done[i] = true;
-			return res;
+			return cap;
 		}
 	public:
-		Dinic(int nn, int s, int t)
-			: n(nn), conns(nn), dist(nn), done(nn), source(s), sink(t) {}
+		Dinic(int n) : conns(n), dist(n), act_ind(n) {}
 
-		const Edge& getEdge(int j) const { return edges[j]; }
-		void addEdge(int a, int b, ll c = INF, bool dir = 1) {
-			edges.emplace_back(a, b, c, dir);
-			conns[a].push_back(edges.size() - 1);
-			conns[b].push_back(edges.size() - 1);
+		int addEdge(int s, int t, ll c = INF, bool dir = 1) {
+			int i = edges.size() / 2;
+			edges.emplace_back(t, c);
+			edges.emplace_back(s, dir ? 0 : c);
+			conns[s].push_back(2*i);
+			conns[t].push_back(2*i+1);
+			return i;
 		}
-		ll pushFlow() {
-			ll res = 0;
-			while(calcDists()) {
-				for (int i = 0; i < n; ++i) done[i] = false;
-				res += dfsFlow(source);
+		ll pushFlow(int source, int sink) {
+			for (ll res = 0;;) {
+				calcDists(sink);
+				if (dist[source] == -1) return res;
+				for (int& v : act_ind) v = 0;
+				res += INF - dfsFlow(source, sink, INF);
 			}
-			return res;
 		}
+		ll getEdgeFlow(int i) const { return edges[2*i].c - edges[2*i].a; }
 };
