@@ -1,14 +1,14 @@
 int firstBit(ull x) { return __builtin_ctzll(x); }
 int lastBit(ull x) { return 63 - __builtin_clzll(x); }
 
-// O(n) preprocessing, O(1) RMQ data structure. Range queries ARE NOT INCLUSIVE!!!
+// O(n) preprocessing, O(1) RMQ data structure.
 template<class T>
 class RMQ {
 	private:
 		const int H = 6; // Block size is 2^H
 		const int B = 1 << H;
 		vector<T> vec; // Original values
-		vector<ull> mins;
+		vector<ull> mins; // Min bits
 		vector<int> tbl; // sparse table
 		int n, m;
 
@@ -46,6 +46,7 @@ class RMQ {
 			}
 		}
 		int argmin(int a, int b) const {
+			++b; // to make the range inclusive
 			int len = min(b-a, B);
 			int ind1 = minInd(getShort(a, len), getShort(b-len, len));
 
