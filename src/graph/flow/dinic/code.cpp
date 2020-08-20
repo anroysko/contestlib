@@ -8,9 +8,8 @@ class Dinic {
 		const static ll INF = 8*(ll)1e18;
 		struct Edge {
 			const int t; // Endpoint
-			const ll c; // Capacity
 			ll a; // Admissible flow
-			Edge(int tar, ll cap = INF) : t(tar), c(cap), a(cap) {}
+			Edge(int tar, ll cap = INF) : t(tar), a(cap) {}
 		};
 
 		vector<Edge> edges;
@@ -68,5 +67,15 @@ class Dinic {
 				res += INF - dfsFlow(source, sink, INF);
 			}
 		}
-		ll getFlow(int i) const { return edges[2*i].c - edges[2*i].a; }
+		// Returns a min-cut containing the sink
+		vector<int> minCut() {
+			vector<int> res;
+			for (int i = 0; i < dist.size(); ++i) {
+				if (dist[i] == -1) res.push_back(i);
+			}
+			return res;
+		}
+		// Gives flow on edge assuming it is directed/undirected. Undirected flow is signed.
+		ll getDirFlow(int i) const { return edges[2*i+1].a; }
+		ll getUndirFlow(int i) const { return (edges[2*i+1].a - edges[2*i].a) / 2; }
 };
