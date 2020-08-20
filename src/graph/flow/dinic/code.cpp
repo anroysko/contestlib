@@ -1,6 +1,5 @@
 
 // Dinic's algorithm for max flow
-// All edges are directed
 // O(V^2 E) in general
 // O(min(V^{2/3}, E^1/2) E) in graphs with unit capacities
 // O(sqrt{V} E) in unit networks (e.g. bipartite matching)
@@ -69,5 +68,5 @@ class Dinic {
 				res += INF - dfsFlow(source, sink, INF);
 			}
 		}
-		ll getEdgeFlow(int i) const { return edges[2*i].c - edges[2*i].a; }
+		ll getFlow(int i) const { return edges[2*i].c - edges[2*i].a; }
 };
