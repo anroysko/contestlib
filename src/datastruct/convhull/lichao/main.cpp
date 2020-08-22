@@ -23,7 +23,7 @@ void solve() {
 		} else if (q == "min_line") {
 			int j;
 			cin >> j;
-			cout << lc.minLine(j).eval(xs[j]) << '\n';
+			cout << lc.minVal(j) << '\n';
 		}
 	}
 }

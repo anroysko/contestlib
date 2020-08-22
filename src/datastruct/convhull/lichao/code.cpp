@@ -17,29 +17,23 @@ class LiChao {
 			return a.eval(xs[j]) < tree[i].eval(xs[j]);
 		}
 	public:
-		LiChao(const vector<ll>& points) : xs(points) {
+		LiChao(const vector<ll>& points) {
 			while(points.size() >> k) ++k;
 			tree.resize(1 << k, {0, INF});
 			xs.resize(1 << k, points.back());
+			for (int i = 0; i < points.size(); ++i) xs[mapInd(i+1)] = points[i];
 		}
 		void addLine(Line line) {
-			for (int i = 1, ia = 0, ib = (1<<k)-2;;) {
-				int mid = (ia + ib) >> 1;
-				if (comp(line, i, mid)) swap(line, tree[i]);
-				if (comp(line, i, ia)) {
-					i = 2*i;
-					ib = mid - 1;
-				} else if (comp(line, i, ib)) {
-					i = 2*i+1;
-					ia = mid + 1;
-				} else break;
+			for (int i = 1; i < tree.size();) {
+				if (comp(line, i, i)) swap(line, tree[i]);
+				if (line.a > tree[i].a) i = 2*i;
+				else i = 2*i+1;
 			}
 		}
-		Line minLine(int j) const {
-			Line res = {0, INF};
-			for (int i = mapInd(j+1); i > 0; i /= 2) {
-				if (! comp(res, i, j)) res = tree[i];
-			}
+		ll minVal(int j) const {
+			j = mapInd(j+1);
+			ll res = INF;
+			for (int i = j; i > 0; i /= 2) res = min(res, tree[i].eval(xs[j]));
 			return res;
 		}
 };
