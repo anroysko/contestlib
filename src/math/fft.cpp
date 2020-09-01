@@ -4,48 +4,43 @@
 #include <complex>
 #include <assert.h>
 using namespace std;
-typedef long double ld;
 
-const double PI = atan((ld)1) * 4;
+const double PI = atan((double)1) * 4;
 
 // Applies the bit-reverse permutation to the given vector
-// Preconditions: vec.size() = 2^lg for some lg.
 // Time Complexity: O(n log n)
 template<class T>
 void bitReverse(vector<T>& vec) {
 	int n = vec.size();
-	int lg = 0;
-	while((1<<lg) < n) ++lg;
 	for (int i = 0; i < n; ++i) {
 		int t = 0;
-		for (int j = 0; j < lg; ++j) {
-			if (i & (1<<j)) t |= 1<<(lg-1-j);
+		for (int j = 0; (1 << j) < n; ++j) {
+			if (i & (1 << j)) t |= n >> (j+1);
 		}
 		if (i < t) swap(vec[i], vec[t]);
 	}
 }
 
 // Iterative FFT.
-// Preconditions: pol.size() = 2^lg for some lg, nth_root is the nth root of unity or its inverse.
-// Time Complexity: O(n log(n))
+// Assumes that pol.size() = 2^m for some integer m, and that nth_root is the nth root of unity or its inverse.
+// Time Complexity: O(n log n)
 void fft(vector<complex<double>>& pol, complex<double> nth_root) {
+	int n = pol.size();
 	bitReverse(pol); // Lets us calculate FFT iteratively
 
-	int n = pol.size();
-	int lg = 0;
-	while((1<<lg) < n) ++lg;
-	
-	vector<complex<double>> pows(lg); // nth_root^(2^(lg-1-i))
+	int m = 0;
+	while((1 << m) < n) ++m;
+	vector<complex<double>> pows(m); // pows[i] = nth_root^(2^(m-1 - i))
 	pows.back() = nth_root;
-	for (int i = lg-2; i >= 0; --i) pows[i] = pows[i+1] * pows[i+1];
+	for (int i = m - 2; i >= 0; --i) pows[i] = pows[i + 1] * pows[i + 1];
 	
-	for (lg = 0; (1<<lg) < n; ++lg) {
-		int h = 1<<lg;	// half
-		int len = h<<1;	// step length
-		complex<double> root = pows[lg];
+	for (int k = 0; k < m; ++k) {
+		int h = 1 << k;	// half of step length
+		int len = h << 1; // step length
+		complex<double> root = pows[k];
 		for (int j = 0; j < n; j += len) {
 			complex<double> curr = 1;
-			for (int i = j; i < j+h; ++i) {
+			for (int i = j; i < j + h; ++i) {
 				auto tmp = curr * pol[i + h];
 				pol[i + h] = pol[i] -  tmp;
 				pol[i] += tmp;
@@ -58,13 +53,11 @@ void fft(vector<complex<double>>& pol, complex<double> nth_root) {
 // Calculates the product of two polynomials a and b.
 // Time Complexity: O(n log n) where n = O(max(a.size(), b.size()))
 vector<double> polyMult(const vector<double>& a, const vector<double>& b) {
-	int as = a.size();
-	int bs = b.size();
+	int as = a.size(), bs = b.size();
 	int n = 1;
 	while(n < (as + bs)) n <<= 1;
 	
-	vector<complex<double>> ap (n, 0);
-	vector<complex<double>> bp (n, 0);
+	vector<complex<double>> ap (n, 0), bp (n, 0);
 	for (int i = 0; i < as; ++i) ap[i] = a[i];
 	for (int i = 0; i < bs; ++i) bp[i] = b[i];
 	
