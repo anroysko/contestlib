@@ -1,8 +1,6 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
+#include <bits/stdc++.h>
 using namespace std;
+using ll = long long;
 
 vector<string> readTokens() {
 	string row;
@@ -18,6 +16,13 @@ vector<string> readTokens() {
 	}
 	return res;
 }
+string itos(int i) {
+	stringstream ss;
+	ss << i;
+	string res;
+	ss >> res;
+	return res;
+}
 
 int main() {
 	vector<string> nm = readTokens();
@@ -27,11 +32,24 @@ int main() {
 	ofstream fout;
 	fout.open("graph.dot");
 	fout << "Graph G {\n";
-	for (int i = 0; i < n; ++i) {
-		fout << "\t" << i+1 << ";\n";
+
+	// Print nodes
+	vector<vector<string>> labels(n);
+	for (int i = 0; i < n; ++i) labels[i].push_back(itos(i+1));
+
+	vector<string> ed = readTokens();
+	while(ed.size() == n && n > 3) {
+		for (int i = 0; i < n; ++i) labels[i].push_back(ed[i]);
+		ed = readTokens();
 	}
+	for (int i = 0; i < n; ++i) {
+		fout << "\t" << i+1 << " [label=\"";
+		for (int j = 0; j+1 < labels[i].size(); ++j) fout << labels[i][j] << ", ";
+		fout << labels[i].back() << "\"];";
+	}
+
+	// Print edges
 	for (int i = 0; i < m; ++i) {
-		vector<string> ed = readTokens();
 		fout << "\t" << ed[0] << " -- " << ed[1];
 		if (ed.size() > 2) {
 			fout << " [label=\"";
@@ -39,10 +57,12 @@ int main() {
 			fout << ed.back() << "\"]";
 		}
 		fout << ";\n";
+		if (i+1 < m) ed = readTokens();
 	}
 	fout << "}\n";
 	fout.close();
 
+	// Generate and show
 	system("dot graph.dot -Tpng > graph.png");
-	system("xgd-open graph.png");
+	system("xdg-open graph.png");
 }
