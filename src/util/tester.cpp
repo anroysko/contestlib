@@ -1,14 +1,7 @@
-#include <iostream>
-#include <fstream>
-#include <random>
-#include <chrono>
-#include <vector>
-#include <algorithm>
+#include <bits/stdc++.h>
 using namespace std;
 using ll = long long;
 
-// rand-function that works properly on windows, and is faster than rand
-// https://codeforces.com/blog/entry/61587
 mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
 template<class T>
 T rand(T a, T b) {
@@ -20,6 +13,7 @@ T rand() {
 }
 
 const int TC = 100;
+const int N = 10;
 
 void genTest(ofstream& fout) {
 	// Generate and output test here
@@ -38,8 +32,9 @@ int main() {
 		fout << t << '\n';
 		for (int ti = 0; ti < t; ++ti) genTest(fout);
 		*/
-		genTest(fout);
 
+		genTest(fout);
+		fout.flush();
 		fout.close();
 
 		bool fail = false;
