@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 using ll = long long;
+using ld = long double;
 using lll = __int128;
 
 mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
@@ -22,6 +23,35 @@ T max(T a, T b, T c) { return max(a, max(b, c)); }
 template<class T>
 int sign(T v) { return (v > 0) - (v < 0); }
 
+// Not stable, assumes there are no duplicate values
+template<class T>
+void quickSelect(int a0, int b0, vector<int>& inds, const vector<T>& vals, int k) {
+	while(true) {
+		int b = b0;
+		int i = rand(a0, b0);
+		T x = vals[inds[i]];
+		swap(inds[i], inds[b0]);
+
+		for (int t = 0, j = a0; t < b0 - a0; ++t) {
+			if (vals[inds[j]] > x) {
+				--b;
+				swap(inds[b], inds[j]);
+			} else {
+				++j;
+			}
+		}
+		swap(inds[b], inds[b0]);
+
+		if (k < b - a0) {
+			b0 = b - 1;
+		} else if (k > b + 1 - a0) {
+			k -= b + 1 - a0;
+			a0 = b + 1;
+		} else break;
+	}
+}
+
+
 template<class T, class TL>
 struct Geometry {
 	struct Point {
@@ -34,6 +64,8 @@ struct Geometry {
 		Point operator-(const Point& rhs) const { return {x - rhs.x, y - rhs.y}; }
 		Point operator*(const T& v) const { return {x * v, y * v}; }
 		Point operator/(const T& v) const { return {x / v, y / v}; }
+		Point& operator+=(const Point& rhs) { x += rhs.x; y += rhs.y; return *this; }
+		Point& operator-=(const Point& rhs) { x -= rhs.x; y -= rhs.y; return *this; }
 		TL sqLength() const { return (TL)x*x + (TL)y*y; }
 
 		// Complex operations
@@ -46,246 +78,187 @@ struct Geometry {
 	static TL dot(const Point& a, const Point& b) { return (TL)a.x * b.x + (TL)a.y * b.y; }
 	static TL cross(const Point& a, const Point& b) { return (TL)a.x * b.y - (TL)a.y * b.x; }
 
+
 	// Does vector 0 -> a turn LEFT of vector 0 -> b (1 left, 0 parallel, -1 right)
 	static int leftTurn(const Point& a, const Point& b) {
 		return -sign(cross(a, b));
 	}
 
-	// Is point p in triangle t? (1 strictly in, 0 in, -1 out)
-	static int contains(const array<Point, 3>& t, const Point& p) {
-		int a = leftTurn(p - t[0], t[1] - t[0]);
-		int b = leftTurn(p - t[1], t[2] - t[1]);
-		int c = leftTurn(p - t[2], t[0] - t[2]);
-
-		int mi = min(a, b, c);
-		int ma = max(a, b, c);
-		if (mi == -ma) return -1;
-		else return (mi != 0);
-	}
-
-	// Are points t in convex position? (1 strictly convex, 0 convex, -1 not convex)
-	static int convPos(const array<Point, 4>& t) {
-		return leftTurn(t[2] - t[0], t[1] - t[0]) * leftTurn(t[3] - t[0], t[1] - t[0])
-			* leftTurn(t[0] - t[2], t[3] - t[2]) * leftTurn(t[1] - t[2], t[3] - t[2]);
-	}
-
-	// Is point p in the circumcircle of triangle t? (1 strictly in, 0 in, -1 out)
-	// Overflows if (|p| + |a| + |b| + |c|)^4 overflows TL
-	static array<TL, 3> lift(const Point& p) {
-		return {p.x, p.y, p.sqLength()};
-	}
-
-	static int inCirc(const array<Point, 3>& t, const Point& p) {
-		auto la = lift(t[0] - p), lb = lift(t[1] - p), lc = lift(t[2] - p);
-		if (leftTurn(t[2] - t[0], t[1] - t[0]) == 1) swap(lb, lc);
-
+	// Is point p in the circumcircle of triangle abc? (1 strictly in, 0 in, -1 out)
+	static int inCirc(Point a, Point b, Point c, const Point& p) {
+		a -= p; b -= p; c -= p;
 		TL res = 0;
-		res += la[0] * (lb[1] * lc[2] - lb[2] * lc[1]);
-		res += la[1] * (lb[2] * lc[0] - lb[0] * lc[2]);
-		res += la[2] * (lb[0] * lc[1] - lb[1] * lc[0]);
-		return -sign(res);
+		res += a.sqLength() * ((TL)b.x * c.y - (TL)b.y * c.x);
+		res += b.sqLength() * ((TL)a.y * c.x - (TL)a.x * c.y);
+		res += c.sqLength() * ((TL)a.x * b.y - (TL)a.y * b.x);
+		return sign(res) * leftTurn(c - a, b - a);
 	}
 
 	class Delaunay {
 		private:
 			struct HalfEdge {
-				int nxt;
-				int vertex;
-				int hist_ind;
-
-				HalfEdge() : nxt(-1), vertex(-1), hist_ind(-1) {}
-				HalfEdge(int n, int v, int h) : nxt(n), vertex(v), hist_ind(h) {}
-			};
-			struct HistoryNode {
-				int edge_ind;
-				int new_vertex = -1;
-				array<int, 3> child = {-1, -1, -1};
-
-				HistoryNode(int ei) : edge_ind(ei) {}
+				int nxt, pre, v; // next edge, previous edge, endpoint (outer face in CCW order)
+				HalfEdge(int x, int p, int t) : nxt(x), pre(p), v(t) {}
 			};
 
 			vector<Point> points;
-			vector<HalfEdge> edges; // Half-edge data structure
-			vector<HistoryNode> hg; // History graph
+			vector<HalfEdge> edges;
+			vector<int> inds;
 
-			// Find next triangle in history graph
-			pair<int, array<int, 3>> advance(Point p, array<int, 3> cur, const HistoryNode& node) const {
-				array<Point, 3> t = {points[cur[0]], points[cur[1]], points[cur[2]]};
-				Point new_point = points[node.new_vertex];
+			bool valid(int i, int dx, int dy) const {
+				Point p = points[edges[i].v] - points[edges[i^1].v];
+				int val = sign(p.x) * (2*dx + dy) + sign(p.y) * (2*dy + dx);
+				return val >= 0;
+			}
+			int advance(int i, int dx, int dy) const {
+				while(!valid(i, dx, dy) || valid(edges[i].nxt, dx, dy)) {
+					i = edges[i].nxt;
+				}
+				return i;
+			}
+			int makeEdge(int s, int t) {
+				int i = edges.size();
+				edges.emplace_back(i ^ 1, i ^ 1, t);
+				edges.emplace_back(i, i, s);
+				return i;
+			}
+			void setNxt(int i, int j) {
+				edges[i].nxt = j;
+				edges[j].pre = i;
+			}
+			void weld(int i, int j) {
+				setNxt(i, j);
+				setNxt(j ^ 1, i ^ 1);
+			}
+			int connect(int i, int j) {
+				int k = makeEdge(edges[i].v, edges[j].v);
+				setNxt(k, edges[j].nxt);
+				setNxt(k ^ 1, edges[i].nxt);
+				setNxt(i, k);
+				setNxt(j, k ^ 1);
+				return k;
+			}
+			void delEdge(int i) {
+				setNxt(edges[i].pre, edges[i ^ 1].nxt);
+				setNxt(edges[i ^ 1].pre, edges[i].nxt);
+				edges[i].v = -1;
+				edges[i ^ 1].v = -1;
+			}
 
-				for (int j = 0; j < 3; ++j) {
-					if (node.child[j] == -1) continue;
-					swap(new_point, t[j]);
+			int merge(int le, int ri) {
+				// Merge
+				int cur = connect(le, ri) ^ 1;
 
-					if (contains(t, p) >= 0) {
-						cur[j] = node.new_vertex;
-						sort(cur.begin(), cur.end());
-						return {node.child[j], cur};
+				array<bool, 2> lrv = {1, 1};
+				while(lrv[0] || lrv[1]) {
+					array<Point, 2> pts1 = {points[edges[cur].v], points[edges[cur ^ 1].v]};
+					array<Point, 2> pts2, pts3;
+					array<int, 2> ed = {edges[cur].nxt, edges[cur].pre};
+
+					for (int j = 0; j <= 1; ++j) {
+						pts2[j] = points[edges[ed[j] ^ j].v];
+						pts3[j] = points[edges[edges[ed[j] ^ 1].nxt].v];
+						lrv[j] = (leftTurn(pts2[j] - pts1[j^1], pts1[j] - pts1[j^1]) == (j ? 1 : -1));
+						while(lrv[j] && inCirc(pts1[j^1], pts1[j], pts2[j], pts3[j]) == 1) {
+							int tmp = (j ? edges[ed[j] ^ 1].pre : edges[ed[j] ^ 1].nxt);
+							delEdge(ed[j]);
+							ed[j] = tmp;
+							pts2[j] = points[edges[ed[j] ^ j].v];
+							pts3[j] = points[edges[edges[ed[j] ^ 1].nxt].v];
+						}
 					}
-					swap(new_point, t[j]);
+					if (lrv[0] && (! lrv[1] || inCirc(pts1[0], pts1[1], pts2[1], pts2[0]) == 1)) {
+						cur = connect(ed[0], ed[1]) ^ 1;
+					} else if (lrv[1]) {
+						cur = connect(cur, edges[ed[1]].pre) ^ 1;
+					}
 				}
-				return {-1, cur};
+				return cur;
 			}
 
-			// Find terminal history graph triangle containing point
-			int locate(Point p) const {
-				int hi = 0;
-				array<int, 3> cur = {0, 1, 2};
-				while(true) {
-					auto nxt = advance(p, cur, hg[hi]);
-					if (nxt.first == -1) break;
-					else tie(hi, cur) = nxt;
-				}
-				return hi;
-			}
+			// Returns pointer to an edge on the outer face, pointing to the vertex with minimum y-coordinate
+			int recBuild(int ia, int ib, const vector<pair<T, T>>& xys, const vector<pair<T, T>>& yxs, bool f) {
+				int k = ib - ia + 1;
+				if (k == 2) {
+					return makeEdge(inds[ia], inds[ia + 1]);
+				} else if (k == 3) {
+					if (xys[inds[ia + 0]] > xys[inds[ia + 1]]) swap(inds[ia + 0], inds[ia + 1]);
+					if (xys[inds[ia + 1]] > xys[inds[ia + 2]]) swap(inds[ia + 1], inds[ia + 2]);
+					if (xys[inds[ia + 0]] > xys[inds[ia + 1]]) swap(inds[ia + 0], inds[ia + 1]);
 
-			// Makes the history node nonterminal
-			void splitNode(int ind, int new_v, int v1, int c1, int v2, int c2, int v3, int c3) {
-				hg[ind].edge_ind = -1;
-				hg[ind].new_vertex = new_v;
+					int i = makeEdge(inds[ia], inds[ia + 1]);
+					makeEdge(inds[ia + 1], inds[ia + 2]);
+					weld(i, i+2);
 
-				array<pair<int, int>, 3> arr;
-				arr[0] = {v1, c1};
-				arr[1] = {v2, c2};
-				arr[2] = {v3, c3};
-				sort(arr.begin(), arr.end());
-				for (int j = 0; j < 3; ++j) hg[ind].child[j] = arr[j].second;
-			}
-
-			// Split history graph triangle hi in three, by adding edges to point pi
-			void splitTriangle(int hi, int pi) {
-				array<int, 3> te;
-				te[0] = hg[hi].edge_ind;
-				for (int ind = edges[te[0]].nxt; ind != te[0]; ind = edges[ind].nxt) {
-					if (edges[ind].vertex < edges[te[0]].vertex) te[0] = ind;
-				}
-				te[1] = edges[te[0]].nxt;
-				te[2] = edges[te[1]].nxt;
-
-				int es = edges.size();
-				int hs = hg.size();
-				edges.resize(es + 6);
-				for (int j = 0; j < 3; ++j) {
-					// Create new face without vertex j
-					int ei = te[(j+2) % 3];
-					edges[ei].hist_ind = hs + j;
-					edges[ei].nxt = es + 2*j;
-					edges[es + 2*j] = {es + (2*j + 5) % 6, pi, hs + j};
-					edges[es + (2*j + 5) % 6] = {ei, edges[te[(j+1) % 3]].vertex, hs + j};
-
-					hg.emplace_back(ei);
-				}
-				splitNode(hi, pi, edges[te[0]].vertex, hs, edges[te[1]].vertex, hs + 1, edges[te[2]].vertex, hs + 2);
-			}
-
-			// Try to perform a Lawson flip on edge e0
-			bool lawsonFlip(int e0) {
-				if (e0 < 3) return false; // Edge on outer face
-
-				// Check that the points are in convex position
-				array<int, 3> e = {e0, edges[e0].nxt, edges[edges[e0].nxt].nxt};
-				array<int, 3> f = {e0 ^ 1, edges[e0 ^ 1].nxt, edges[edges[e0 ^ 1].nxt].nxt};
-
-				int va1 = edges[e[0]].vertex, va2 = edges[f[0]].vertex;
-				int vb1 = edges[e[1]].vertex, vb2 = edges[f[1]].vertex;
-				auto pa1 = points[va1], pa2 = points[va2];
-				auto pb1 = points[vb1], pb2 = points[vb2];
-
-				int cp = convPos({pa1, pa2, pb1, pb2});
-
-				if (cp == -1) {
-					return false;
-				} else if (cp == 0) {
-					if (leftTurn(pb1 - pa1, pa2 - pa1) != 0) return false;
+					int turn = leftTurn(points[inds[ia + 2]] - points[inds[ia]], points[inds[ia + 1]] - points[inds[ia]]);
+					if (turn != 0) {
+						makeEdge(inds[ia + 2], inds[ia]);
+						weld(i+2, i+4);
+						weld(i+4, i);
+					}
+					return (turn == -1 ? (i ^ 1) : i);
 				} else {
-					if (va1 >= 3 && va2 >= 3 && (vb2 < 3
-						|| inCirc({pa1, pa2, pb1}, pb2) < 1)) return false; // Flipping to a corner / edge not bad
-				}
+					int h = k/2;
+					quickSelect(ia, ib, inds, (f ? yxs : xys), h);
+					int le = advance(recBuild(ia, ia + h-1, xys, yxs, f ^ 1), f^1, f);
+					int ri = advance(recBuild(ia + h, ib, xys, yxs, f ^ 1), -(f^1), -f);
 
-				int hs = hg.size();
-				hg.emplace_back(e[0]);
-				hg.emplace_back(f[0]);
-				splitNode(edges[e[0]].hist_ind, vb2, va2, hs + 1, va1, hs, vb1, -1);
-				splitNode(edges[f[0]].hist_ind, vb1, va2, hs + 1, va1, hs, vb2, -1);
-
-				edges[e[0]].vertex = vb1;
-				edges[f[0]].vertex = vb2;
-				for (int j = 0; j < 3; ++j) {
-					edges[e[j]].nxt = (j == 0 ? e : f)[(j + 2) % 3];
-					edges[f[j]].nxt = (j == 0 ? f : e)[(j + 2) % 3];
-					edges[e[j]].hist_ind = hs + (j == 1);
-					edges[f[j]].hist_ind = hs + (1 - (j == 1));
-				}
-				return true;
-			}
-
-			// Adds a point p to the triangulation
-			void addPoint(int pi) {
-				int hi = locate(points[pi]);
-				int ei = hg[hi].edge_ind;
-
-				int e0 = hg[hi].edge_ind;
-				int e1 = edges[e0].nxt;
-				int e2 = edges[e1].nxt;
-				vector<int> que = {e0, e1, e2};
-
-				splitTriangle(hi, pi);
-
-				for (int j = 0; j < que.size(); ++j) {
-					if (edges[edges[que[j]].nxt].vertex != pi) continue;
-					int i1 = edges[que[j] ^ 1].nxt;
-					int i2 = edges[i1].nxt;
-
-					if (lawsonFlip(que[j])) {
-						que.push_back(i1);
-						que.push_back(i2);
+					// Back down as far as possible
+					while(true) {
+						Point a = points[edges[le].v];
+						Point b = points[edges[ri].v];
+						Point a2 = points[edges[edges[le].pre].v];
+						Point b2 = points[edges[edges[ri].nxt].v];
+						if (leftTurn(b2 - a, b - a) == -1) ri = edges[ri].nxt;
+						else if (leftTurn(a2 - b, a - b) == 1) le = edges[le].pre;
+						else break;
 					}
+
+					return merge(le, ri);
 				}
 			}
 		public:
-			vector<vector<int>> triangulation() const {
-				vector<vector<int>> g((int)points.size() - 3);
-				for (int e = 0; e < edges.size(); ++e) {
-					int a = edges[e].vertex;
-					if (a < 3) continue;
-
-					int b = edges[edges[e].nxt].vertex;
-					if (b < 3) continue;
-
-					g[a-3].push_back(b-3);
+			Delaunay(const vector<Point>& pts) : points(pts), inds(pts.size()) {
+				int n = points.size();
+				vector<pair<T, T>> xys(n), yxs(n);
+				for (int i = 0; i < n; ++i) {
+					inds[i] = i;
+					xys[i] = {points[i].x, points[i].y};
+					yxs[i] = {points[i].y, points[i].x};
 				}
-				return g;
+				recBuild(0, n-1, xys, yxs, 1);
 			}
-
-			Delaunay(vector<Point> pts) {
-				edges.emplace_back(1, 0, 0);
-				edges.emplace_back(2, 1, 0);
-				edges.emplace_back(0, 2, 0);
-				edges.emplace_back();
-				hg.emplace_back(0);
-
-				T mx = 2;
-				for (auto p : pts) mx = max(mx, abs(p.x), abs(p.y));
-				points.emplace_back(-3*mx, -3*mx);
-				points.emplace_back(-mx/2, 3*mx);
-				points.emplace_back(3*mx, -mx/2);
-
-				for (auto p : pts) points.push_back(p);
-
-				vector<int> ord(pts.size());
-				for (int i = 0; i < pts.size(); ++i) ord[i] = i;
-				shuffle(ord.begin(), ord.end(), rng);
-
-				for (auto i : ord) addPoint(i + 3);
+			vector<array<int, 3>> getTriangulation() const {
+				vector<array<int, 3>> res;
+				for (int i0 = 0; i0 < edges.size(); ++i0) {
+					if (edges[i0].v == -1) continue; // Deleted edge
+					int i1 = edges[i0].nxt;
+					int i2 = edges[i1].nxt;
+					Point p0 = points[edges[i0].v];
+					Point p1 = points[edges[i1].v];
+					Point p2 = points[edges[i2].v];
+					if (min(i1, i2) <= i0 || leftTurn(p2 - p0, p1 - p0) >= 0) continue;
+					res.push_back({edges[i0].v, edges[i2].v, edges[i1].v});
+				}
+				return res;
+			}
+			vector<vector<int>> getConns() const {
+				vector<vector<int>> res(points.size());
+				for (int i = 0; i < (int)edges.size(); ++i) {
+					if (edges[i].v != -1) res[edges[i ^ 1].v].push_back(edges[i].v);
+				}
+				return res;
 			}
 	};
 };
 
 // Geom::Point, Geom::Delaunay etc
-// using Geom = Geometry<double, long double>;
-using Geom = Geometry<ll, __int128>;
+// using Geom = Geometry<GeomDouble<ld>, GeomDouble<ld>>;
+using Geom = Geometry<ll, lll>;
 istream& operator>>(istream& s, Geom::Point& p) { return s >> p.x >> p.y; }
 ostream& operator<<(ostream& s, const Geom::Point& p) { return s << "(" << p.x << ", " << p.y << ")"; }
+
+const int H = 1e9;
 
 int main() {
 	ios_base::sync_with_stdio(false);
@@ -297,12 +270,12 @@ int main() {
 	for (int i = 0; i < n; ++i) cin >> pts[i];
 	
 	Geom::Delaunay dl(pts);
-	vector<vector<int>> g = dl.triangulation();
 
-	cout << g.size() << '\n';
+	vector<vector<int>> g = dl.getConns();
 
+	cout << fixed << setprecision(3);
 	cout << "graph G {\n";
-	for (int i = 0; i < n; ++i) cout << "\t" << i << " [pos=\"" << pts[i].x << "," << pts[i].y << "!\"];\n";
+	for (int i = 0; i < n; ++i) cout << "\t" << i << " [pos=\"" << (double)pts[i].x << "," << (double) pts[i].y << "!\"];\n";
 	for (int i = 0; i < n; ++i) {
 		sort(g[i].begin(), g[i].end());
 		for (int t : g[i]) {
