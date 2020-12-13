@@ -1,171 +1,146 @@
-#include <iostream>
-#include <utility>
-#include <vector>
-#include <queue>
-#include <memory>
+#include <bits/stdc++.h>
 using namespace std;
-typedef long long ll;
+using ll = long long;
 
-struct Edge {
-	int s; // source
-	int t; // target
-	ll c; // cost
-};
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+template<class T>
+T rand(T a, T b) {
+	return uniform_int_distribution<T>(a, b)(rng);
+}
+template<class T>
+T rand() {
+	return uniform_int_distribution<T>()(rng);
+}
 
-// Finds minimum directed spanning tree of input graph ( http://www.cs.tau.ac.il/~zwick/grad-algo-13/directed-mst.pdf )
-// Contracting runs in O(m log(n)^2), but expanding is O(n).
-// Therefore you can construct k MST's each with arbitrary root in O(m log(n)^2 + kn)
-// To do this, make copies of this structure and call expand on them.
-class DirMST {
-	const static int MAX_NODES = 1e4;
-	const static int MAX_EDGE_COST = 1e9;
+// Meldable Heap
+struct MH {
+	const int ind;
+	ll val, inc = 0;
+	MH* ch[2] = {nullptr, nullptr};
 
-	int n, cn; // Initial and current node count
-	vector<int> ined; // Edge leading to this node
-	vector<int> par; // Parent component
-	vector<int> group; // Highest-up supernode that contains this
-	vector<ll> base; // Base cost for edges into node. Added to all costs in "ins"
-	vector<vector<int>> childs; // Child components
-	vector<priority_queue<pair<ll, int>>> ins; // All edges into this node, by cost
+	MH(int i, ll v) : ind(i), val(v) {}
+	~MH() { delete ch[0]; delete ch[1]; }
 
-	int coll(int i) {
-		if (group[i] != i) group[i] = coll(group[i]);
-		return group[i];
-	}
-	void joinQues(int a, int b) {
-		ll dif = base[b] - base[a];
-		if (ins[b].size() > ins[a].size()) {
-			dif = base[a] - base[b];
-			base[a] = base[b];
-			swap(ins[b], ins[a]);
-		}
-		while(! ins[b].empty()) {
-			auto el = ins[b].top();
-			ins[b].pop();
-			ins[a].emplace(el.first - dif, el.second);
-		}
-	}
-	void contract(const vector<Edge>& ed) {
-		int a = 0; // Active node
-		while(! ins[a].empty()) {
-			auto el = ins[a].top();
-			ins[a].pop();
-			int ei = el.second;
-
-			int b = coll(ed[ei].s);
-			if (a == b) continue;
-
-			ined[a] = ei;
-			base[a] = el.first;
-			if (ined[b] == -1) a = b;
-			else {
-				a = cn;
-				++cn;
-				do {
-					par[b] = a;
-					group[b] = a;
-					childs[a].push_back(b);
-					joinQues(a, b);
-					b = coll(ed[ined[b]].s);
-				} while(b != a);
-			}
-		}
-	}
-	void dismantle(int r, vector<int>& vec) {
-		while(par[r] != r) {
-			for (auto c : childs[par[r]]) {
-				if (c == r) continue;
-				par[c] = c;
-				if (! childs[c].empty()) {
-					vec.push_back(c);
-				}
-			}
-			r = par[r];
-		}
+	static void push(MH* p) {
+		add(p->ch[0], p->inc);
+		add(p->ch[1], p->inc);
+		p->inc = 0;
 	}
 
-	public:
-	const static ll INF = (ll)MAX_NODES*MAX_EDGE_COST + 1; // cost assigned to nonexistent edges
-
-	DirMST(int nn, vector<Edge> ed) : n(nn), cn(nn), ined(2*nn, -1),
-			par(2*nn), base(2*nn, 0), childs(2*nn), ins(2*nn) {
-		for (int i = 0; i < n; ++i) ed.push_back({(i+1)%n, i, INF+1});
-		for (int i = 0; i < ed.size(); ++i) ins[ed[i].t].emplace(-ed[i].c, i);
-		for (int i = 0; i < 2*n; ++i) par[i] = i;
-		group = par;
-		contract(ed);
+	// Increment all values in heap p by v
+	static void add(MH* p, ll v) {
+		if (! p) return;
+		p->val += v;
+		p->inc += v;
 	}
-	// Find min directed spanning tree rooted at r. Returns {} if none exists
-	vector<int> expand(int r, const vector<Edge>& ed) {
-		vector<int> vec;
-		dismantle(r, vec);
-		int m = ed.size();
-		for (int i = 0; i < vec.size(); ++i) {
-			int ei = ined[vec[i]];
-			int t = (ei >= m ? ei-m : ed[ei].t);
-			ined[t] = ei;
-			dismantle(t, vec);
-		}
+	// Merge heaps a and b
+	static MH* meld(MH* a, MH* b) {
+		if (! a) return b;
+		if (! b) return a;
+		if (a->val > b->val) swap(a, b);
 
-		vector<int> res;
-		for (int i = 0; i < n; ++i) {
-			if (i == r) continue;
-			if (ined[i] >= m) return {};
-			res.push_back(ined[i]);
-		}
+		push(a);
+		int x = rand(0, 1);
+		a->ch[x] = meld(a->ch[x], b);
+		return a;
+	}
+	// Pop minimum element in heap p
+	static pair<int, ll> pop(MH*& p) {
+		pair<int, ll> res = {p->ind, p->val};
+		MH* tmp = p;
+		p = meld(p->ch[0], p->ch[1]);
+		tmp->ch[0] = tmp->ch[1] = nullptr;
+		delete tmp;
 		return res;
 	}
 };
 
-// Example usage
+struct Edge {
+	int s, t;
+	ll w;
+	Edge(int src, int tar, ll weight) : s(src), t(tar), w(weight) {}
+};
+
+class DirMst {
+	private:
+		const vector<Edge> ed;
+		vector<int> par, cmp, pick;
+		vector<MH*> ins;
+		int n, x = 0; // x: remaining vertex after contractions
+		
+		void setp(int i, int p) { par[i] = p; cmp[i] = p; }
+		int getc(int i) {
+			if (cmp[i] != i) cmp[i] = getc(cmp[i]);
+			return cmp[i];
+		}
+		int adv(int i) {
+			while(ins[i]) {
+				int r = getc(ed[ins[i]->ind].s);
+				if (r != i) return r;
+				else MH::pop(ins[i]);
+			}
+			return -1;
+		}
+		void setDI(int i, int t) {
+			for (; cmp[i] < t; i = par[i]) cmp[i] = t;
+		}
+	public:
+		// INPUT GRAPH MUST BE FULLY CONNECTED!
+		DirMst(int n_, const vector<Edge>& e) : n(n_), ed(e), par(2*n_), cmp(2*n_), pick(2*n_), ins(2*n_, nullptr) {
+			for (int i = 0; i < 2*n; ++i) setp(i, i);
+			for (int j = 0; j < ed.size(); ++j) ins[ed[j].t] = MH::meld(ins[ed[j].t], new MH(j, ed[j].w));
+
+			for (int j = n; adv(x) != -1; ++j) {
+				for (; pick[x] < j; x = adv(x)) pick[x] = j;
+				for (; x != j; x = getc(ed[pick[x]].s)) {
+					ll w;
+					tie(pick[x], w) = MH::pop(ins[x]);
+					MH::add(ins[x], -w);
+					ins[j] = MH::meld(ins[j], ins[x]);
+					setp(x, j);
+				}
+			}
+			for (int& v : cmp) v = -1; // reuse for unpack
+			if (ins[x]) delete ins[x];
+		}
+
+		// Returns the total cost of and the edges in the minimum directed spanning tree rooted at r
+		pair<ll, vector<int>> unpack(int r) {
+			setDI(r, cmp[x] + 1);
+			pair<ll, vector<int>> res;
+			for (int i = x; i >= 0; --i) {
+				if (cmp[i] < cmp[x]) {
+					res.second.push_back(pick[i]);
+					res.first += ed[pick[i]].w;
+					setDI(ed[pick[i]].t, cmp[x]);
+				}
+			}
+			return res;
+		}
+};
+
 int main() {
 	ios_base::sync_with_stdio(false);
 	cin.tie(0);
 
-	bool all;
-	int n, m;
-	cin >> n >> m >> all;
-	vector<Edge> edges(m);
+	int n, m, r;
+	cin >> n >> m >> r;
+	vector<Edge> edges;
 	for (int i = 0; i < m; ++i) {
-		cin >> edges[i].s >> edges[i].t >> edges[i].c;
-		--edges[i].s; --edges[i].t;
+		int a, b;
+		ll w;
+		cin >> a >> b >> w;
+		edges.emplace_back(a, b, w);
 	}
-	
-	if (all) {
-		// Find cost for all spanning trees (O(m log(n)^2 + n^2))
-		DirMST mst(n, edges);
-		for (int i = 0; i < n; ++i) {
-			DirMST cpy = mst;
-			vector<int> ans = cpy.expand(i, edges);
+	for (int i = 0; i < n; ++i) edges.emplace_back(i, r, 0); // make sure the graph is fully connected
 
-			if (ans.empty()) cout << "QAQ\n";
-			else {
-				ll res = 0;
-				for (auto i : ans) res += edges[i].c;
-				cout << res << '\n';
-			}
-		}
-	} else {
-		// Find cost of minimum spanning tree with arbitrary root (O(m log(n)^2))
-		// to do this, add new node with inf-cost edges to all nodes, and expand on it.
-		// For implementation details, note that this usecase is why edges in the struct are inited to INF+1.
-		for (int i = 0; i < n; ++i) {
-			edges.push_back({n, i, DirMST::INF});
-		}
-		DirMST mst(n+1, edges);
-		vector<int> ans = mst.expand(n, edges);
+	DirMst mst(n, edges);
+	auto res = mst.unpack(r);
 
-		ll res = 0;
-		int root = -1;
-		if (ans.empty()) res = 2 * DirMST::INF;
-		for (auto i : ans) {
-			res += edges[i].c;
-			if (res >= 2 * DirMST::INF) break;
-			if (i >= m) root = i - m;
-		}
-		res -= DirMST::INF;
+	cout << res.first << '\n';
 
-		if (res >= DirMST::INF) cout << "QAQ\n";
-		else cout << res << ' ' << root+1 << '\n';
-	}
+	vector<int> ans(n);
+	ans[r] = r;
+	for (auto i : res.second) ans[edges[i].t] = edges[i].s;
+	for (auto i : ans) cout << i << ' '; cout << '\n';
 }
