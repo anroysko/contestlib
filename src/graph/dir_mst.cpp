@@ -1,7 +1,3 @@
-#include <bits/stdc++.h>
-using namespace std;
-using ll = long long;
-
 // Skew Heap
 class SkewHeap {
 	private:
@@ -94,32 +90,3 @@ class DirMst {
 			return res;
 		}
 };
-
-int main() {
-	ios_base::sync_with_stdio(false);
-	cin.tie(0);
-
-	int n, m, r;
-	cin >> n >> m >> r;
-	vector<Edge> edges;
-	for (int i = 0; i < m; ++i) {
-		int a, b;
-		ll w;
-		cin >> a >> b >> w;
-		edges.emplace_back(a, b, w);
-	}
-
-	for (int i = 0; i < n; ++i) {
-		if (i != r) edges.emplace_back(i, r, 0); // make sure the graph is fully connected
-	}
-
-	DirMst mst(n, edges);
-	auto res = mst.unpack(r);
-
-	cout << res.first << '\n';
-
-	vector<int> ans(n);
-	ans[r] = r;
-	for (auto i : res.second) ans[edges[i].t] = edges[i].s;
-	for (auto i : ans) cout << i << ' '; cout << '\n';
-}
