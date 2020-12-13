@@ -89,7 +89,6 @@ class DirMst {
 		DirMst(int n_, const vector<Edge>& e) : n(n_), ed(e), par(2*n_), cmp(2*n_), pick(2*n_), ins(2*n_, nullptr) {
 			for (int i = 0; i < 2*n; ++i) setp(i, i);
 			for (int j = 0; j < ed.size(); ++j) ins[ed[j].t] = MH::meld(ins[ed[j].t], new MH(j, ed[j].w));
-
 			for (int j = n; adv(x) != -1; ++j) {
 				for (; pick[x] < j; x = adv(x)) pick[x] = j;
 				for (; x != j; x = getc(ed[pick[x]].s)) {
