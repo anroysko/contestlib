@@ -55,16 +55,16 @@ class ModNum {
 		static ce Montgomery m = Montgomery(P);
 		uint v;
 
-		ce ModNum(uint x) : v(x) {}
+		ce ModNum(uint x, bool raw) : v(x) {}
 	public:
-		static ce ModNum init(uint x) { return ModNum(m.transform(x)); }
+		ce ModNum(uint x) : v(m.transform(x)) {}
 		ce ModNum(const ModNum& rhs) : v(rhs.v) {}
 		ce operator int() const { return m.reverse(v); }
 
-		ce ModNum operator+(const ModNum& rhs) const { return ModNum(m.add(v, rhs.v)); }
-		ce ModNum operator-(const ModNum& rhs) const { return ModNum(m.sub(v, rhs.v)); }
-		ce ModNum operator*(const ModNum& rhs) const { return ModNum(m.mult(v, rhs.v)); }
-		ce ModNum operator/(const ModNum& rhs) const { return ModNum(m.mult(v, m.pow(rhs.v, P-2))); }
-		ce ModNum pow(ll b) const { return ModNum(m.pow(v, b)); }
+		ce ModNum operator+(const ModNum& rhs) const { return ModNum(m.add(v, rhs.v), 1); }
+		ce ModNum operator-(const ModNum& rhs) const { return ModNum(m.sub(v, rhs.v), 1); }
+		ce ModNum operator*(const ModNum& rhs) const { return ModNum(m.mult(v, rhs.v), 1); }
+		ce ModNum operator/(const ModNum& rhs) const { return ModNum(m.mult(v, m.pow(rhs.v, P-2)), 1); }
+		ce ModNum pow(ll b) const { return ModNum(m.pow(v, b), 1); }
 };
 template<uint P> ce Montgomery ModNum<P>::m;
