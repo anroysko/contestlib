@@ -1,4 +1,3 @@
-
 #define ce constexpr
 using ull = unsigned long long;
 using uint = unsigned int;
@@ -65,7 +64,7 @@ class ModNum {
 		ce ModNum operator+(const ModNum& rhs) const { return ModNum(m.add(v, rhs.v)); }
 		ce ModNum operator-(const ModNum& rhs) const { return ModNum(m.sub(v, rhs.v)); }
 		ce ModNum operator*(const ModNum& rhs) const { return ModNum(m.mult(v, rhs.v)); }
-		ce ModNum operator/(const ModNum& rhs) const { return ModNum(m.mult(v, m.pow(rhs.v, -1))); }
+		ce ModNum operator/(const ModNum& rhs) const { return ModNum(m.mult(v, m.pow(rhs.v, P-2))); }
 		ce ModNum pow(ll b) const { return ModNum(m.pow(v, b)); }
 };
 template<uint P> ce Montgomery ModNum<P>::m;
