@@ -26,7 +26,7 @@ class BinarySpan {
 						ind[(int)vecs.size()] = 1;
 						vecs.insert(vecs.begin() + i, {bts, ind});
 					}
-					return {(int)vecs.size() - 1, ind};
+					return {(int)vecs.size() - insert, ind};
 				}
 			}
 			return {-1, ind};
@@ -34,5 +34,5 @@ class BinarySpan {
 	public:
 		int rank() const { return vecs.size(); }
 		int addVec(bitset<M> bts) { return tryAdd(bts, 1).first; }
-		pair<bool, vector<int>> inSpan(bitset<M> bts) { auto tmp = tryAdd(bts, 0); return {tmp.first != -1, getBits(tmp.second)}; }
+		pair<bool, vector<int>> inSpan(bitset<M> bts) { auto tmp = tryAdd(bts, 0); return {tmp.first == -1, getBits(tmp.second)}; }
 };
