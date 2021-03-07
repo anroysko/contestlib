@@ -2,7 +2,7 @@ class HLD {
 	private:
 		vector<int> par, siz, cmp, ind;
 	public:
-		// Assumes the tree is connected, 0 is the root and par[i] < i for all i
+		// Assumes the tree is connected, 0 is the root and par[i] < i for all i (par[0] == -1)
 		HLD(const vector<int>& p) : par(p), siz(p.size(), 1), cmp(p.size(), 0), ind(p.size()) {
 			int n = par.size();
 			for (int i = n-1; i > 0; --i) siz[par[i]] += siz[i];

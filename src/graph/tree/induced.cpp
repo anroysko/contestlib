@@ -14,7 +14,7 @@ class HLD {
 		void dfs2(int i, int& x, const vector<vector<int>>& g) {
 			ind[i] = x;
 			++x;
-			for (auto t : g[i]) if (t == par[i]) {
+			for (auto t : g[i]) if (t != par[i]) {
 				cmp[t] = (x == ind[i]+1 ? cmp[i] : t);
 				dfs2(t, x, g);
 			}
@@ -50,7 +50,7 @@ class HLD {
 			vector<pair<int, int>> ord(m);
 			for (int j = 0; j < m; ++j) ord[j] = {ind[v[j]], j};
 			sort(ord.begin(), ord.end());
-
+ 
 			for (int j = 0; j+1 < m; ++j) {
 				int x = lca(v[ord[j].second], v[ord[j+1].second]);
 				ord.emplace_back(ind[x], -(x+1));
@@ -68,7 +68,7 @@ class HLD {
 				act.push_back(ord[j].second);
 			}
 			reverse(act.begin(), act.end());
-
+ 
 			vector<int> sta;
 			vector<vector<pair<int, int>>> g(act.size());
 			for (auto j : act) {

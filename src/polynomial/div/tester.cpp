@@ -25,7 +25,8 @@ void genTest(ofstream& fout) {
 	fout << n << ' ' << m << '\n';
 
 	for (int i = 0; i < n; ++i) fout << rand(0, P-1) << ' '; fout << '\n';
-	for (int i = 0; i < m; ++i) fout << rand(0, P-1) << ' '; fout << '\n';
+	for (int i = 0; i < m-1; ++i) fout << rand(0, P-1) << ' ';
+	fout << 1 << '\n';
 }
 
 int main() {

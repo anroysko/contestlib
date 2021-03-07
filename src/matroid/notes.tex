@@ -1,0 +1,276 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{parskip}
+
+\graphicspath{{.}{.}}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}{Lemma}[theorem]
+\newtheorem*{remark}{Remark}
+
+\title{Notes on matroids}
+\author{Antti Roeyskoe}
+\date{25.12.2019}
+
+\begin{document}
+\begin{titlepage}
+\maketitle
+\end{titlepage}
+\newpage
+
+\section{Matroids}
+\subsection{Basics}
+A \textit{matroid} $M = (E, \mathcal{I})$ is a finite ground set $E$ along with a collection of sets $\mathcal{I} \subseteq 2^{E}$ known as the \textit{independent sets}, satisfying
+\begin{enumerate}
+	\item $\emptyset \in \mathcal{I}$
+	\item If $A \in I$ and $B \subseteq A$, then $B \in \mathcal{I}$
+	\item If $A, B \in \mathcal{I}$ and $|A| < |B|$, exists $x \in B \setminus A$ s.t. $A \cup \{x\} \in \mathcal{I}$
+\end{enumerate}
+We call set $A$ \textit{independent} if $A \in \mathcal{I}$, and \textit{dependent} if $A \not\in \mathcal{I}$.
+We call set $A$ a \textit{circuit} if it is dependent and if all its strict subsets $B \subset A$ are independent.
+We call set $B$ a \textit{basis} if it is independent and for all $x \in E \setminus B$ the set $B \cup \{x\}$ is dependent.
+We'll denote the set of circuits with $\mathcal{C}$ and bases with $\mathcal{B}$.
+
+We define the rank function $r : 2^{E} \mapsto \mathbb{N}$ as the size of its largest independent subset, i.e.
+\begin{equation*}
+r(A) = \max_{X \subseteq A, X \in \mathcal{I}} |X|
+\end{equation*}
+Note that by the third property of matroids, all basises of a matroid have the same size $|B| = r(E)$.
+
+The \textit{span} of a set $A \subset E$ is defined as $span(A) = \{x \mid r(A \cap \{x\}) = r(A)\}$.
+
+\begin{theorem}
+For any rank function $r : 2^{E} \mapsto \mathbb{N}$ and $A, B \subseteq E$ we have
+\begin{enumerate}
+	\item $r(A) \leq r(B)$ if $A \subseteq B$
+	\item $r(A \cup B) \leq |A| + r(B)$
+	\item $r(A) + r(B) \geq r(A \cup B) + r(A \cap B)$ (submodularity)
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+1. is clear. The second follows from $r(U) \leq |U|$ and submodularity:
+\begin{equation*}
+r(A \cup B) = r(A \cup B) + r(\emptyset) \leq r(A \setminus B) + r(B) \leq |A| + r(B)
+\end{equation*}
+
+To show submodularity, select independent $X \subseteq A \cap B, Y \subseteq A \cup B$ s.t. $|X| = r(A \cap B), |Y| = r(A \cup B)$
+and $X \subseteq Y$. This is always possible, as we can first take any maximal $X$ and $Y'$, then add to $X$ elements from $Y'$ until we get a maximal $Y \supset X$. Set
+
+\begin{align*}
+U &= X \cup ((Y \setminus X) \cap A)\\
+T &= X \cup ((Y \setminus X) \cap B)\\
+\end{align*}
+
+Now $U \subseteq A$, $T \subseteq B$, and $U, B \in \mathcal{I}$ as $U, B \subseteq Y \in \mathcal{I}$, hence
+
+\begin{align*}
+r(A) + r(B)	&\geq |U| + |T|\\
+		&= |X \cup ((Y \setminus X) \cap A)| + |X \cup ((Y \setminus X) \cap B)|\\
+		&= 2|X| + |Y \setminus X|\\
+		&= |X| + |Y|\\
+		&= r(A \cap B) + r(A \cup B)\\
+\end{align*}
+
+as desired.
+\end{proof}
+
+\begin{theorem}
+If $X$ is a dependent set, then there exists a circuit $Y \subseteq X$. Further, if $X \setminus \{x\}$ is independent for any $x \in X$, this circuit is unique.
+\end{theorem}
+\begin{proof}
+The first claim is clear, as if $X$ is not a circuit, we can remove some element from it so that it remains dependent. However, this can be done
+at most $|X| - 1$ times, as $\emptyset \in \mathcal{I}$.
+
+Next take any $U \in \mathcal{I}$ and $v$ s.t. $U \cup \{v\} \not\in \mathcal{I}$. Assume there exist two distinct circuits $C_{1}, C_{2} \subseteq U \cup \{v\}$.
+Then exists $a \in C_{1} \setminus C_{2}$. Since $C_{1}$ is a circuit, $C_{1} \setminus \{a\} \in \mathcal{I}$, hence we can extend it to a set $Z$
+s.t. $Z \in \mathcal{I}$, $C_{1} \setminus \{a\} \subset Z$ and $|Z| = |U|$. But then $Z = U \setminus \{a\} \cup \{v\}$, and $C_{2} \subset Z$ as $a \not\in C_{2}$
+contradicting the independence of $Z$.
+\end{proof}
+We'll denote the unique circuit contained in $Y \cup \{x\}$, $Y \in \mathcal{I}$ as $C(Y, x)$.
+
+\begin{theorem}
+For $A, B \subseteq E$ we have
+\begin{enumerate}
+	\item $span(A) \subseteq span(B)$ if $A \subseteq B$
+	\item $r(span(A)) = r(A)$
+	\item $span(span(A)) = span(A)$
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+Assume there exists $x \in span(A) \setminus span(B)$. By submodularity $r(A + x) + r(B) \geq r(B + x) + r(A)$,
+but since $r(A + x) = r(A)$ we have $r(B) = r(B + x)$, hence $x \in span(B)$, a contradiction.
+
+For any $U \subset span(A) \setminus A$ and $x \in span(A) \setminus U$ we have
+\begin{equation*}
+r(A \cup U) + r(A \cup \{x\}) \geq r(A \cup U \cup \{x\}) + r(A)
+\end{equation*}
+by submodularity. But $r(A \cup \{x\}) = r(A)$, hence $r(A \cup U \cup \{x\}) \leq r(A \cup U)$.
+By induction therefore $r(span(A)) = r(A)$.
+
+Finally, for the sake of contradiction assume $r(x \cup span(A)) = r(span(A))$ but $r(x \cup A) > r(A)$. But then
+\begin{equation*}
+r(x \cup A) > r(A) = r(span(A)) = r(x \cup span(A))
+\end{equation*}
+which violates the condition that $r(A) \leq r(B)$ for $A \subseteq B$.
+\end{proof}
+
+\subsection{Basis exchange}
+\begin{theorem}
+(Strong basis exchange)
+
+Given two bases $B_{1}, B_{2} \in \mathcal{B}$, for every $x \in B_{1} \setminus B_{2}$ exists $y \in B_{2} \setminus B_{1}$
+s.t. $B_{1} + y - x, B_{2} - y + x \in \mathcal{B}$.
+\end{theorem}
+\begin{proof}
+Select any $x \in B_{1} \setminus B_{2}$. Set $C = C(B_{2}, x)$. We have $x \in C$, hence $x \in span(C - x)$,
+as $r(C - x) = r(C)$ since $C - x$ is independent and $C$ is a circuit. hence $span((B_{1} \cup C) - x) = span(B_{1} \cup C) = E$,
+since $B_{1}$ is a basis. Hence $(B_{1} \cup C) - x$ contains a basis $B'_{1}$. Therefore exists $y \in B'_{1} \setminus B_{1}$ s.t.
+$B_{1} - x + y \in \mathcal{B}$. But then $y \in C - x \subseteq B_{2}$, and $B_{2} - y + x \in \mathcal{B}$ as removing $y$ breaks the circuit $C$.
+\end{proof}
+
+\section{Matroid Intersection}
+
+\subsection{Exchange graph}
+Given a matroid $M = (E, \mathcal{I})$ and an integer $k \geq 0$, we define the truncated matroid $M^{k} = (E, \mathcal{I}')$ as $\mathcal{I}' = \{U \mid U \in \mathcal{I}, |U| \leq k\}$.
+
+The exchange graph $\mathcal{D}_{M}(U)$ is the bipartite graph with bipartition $U$ and $E \setminus U$, with an edge between $y \in U$ and $x \in E \setminus U$ if $U - y + x \in \mathcal{I}$.
+
+\begin{theorem}
+For any $U, T \in \mathcal{I}$ with $|U| = |T|$, there exists a perfect matching between $U \setminus T$ and $T \setminus U$ in $\mathcal{D}_{M}(U)$.
+\end{theorem}
+\begin{proof}
+Induction on size of $|U \setminus T|$. Case $|U \setminus T| = 0$ is clear. Assume $|U \setminus T| > 0$.
+
+Since $U$ and $T$ are independent in $M^{|U|}$, by strong basis exchange exists $x \in U \setminus T$, $y \in T \setminus U$ s.t. $U - x + y, T + x - y \in \mathcal{I}'$.
+Hence setting $T' = T + x - y$, by the inductive hypothesis there exists a perfect matching between $U \setminus T'$ and $T' \setminus U$, as $|U \setminus T'| = |U \setminus T| - 1$.
+We can then add the edge $(x, y)$ that exists as $U - x + y \in \mathcal{I}'$ to achieve a perfect matching between $U \setminus T$ and $T \setminus U$ in $\mathcal{D}_{M}(U)$.
+\end{proof}
+
+\begin{theorem}
+Let $U$ be any independent set, and $T$ a set of equal size s.t. there exists a unique perfect matching between $U \setminus T$ and $T \setminus U$ in $\mathcal{D}_{M}(U)$.
+then $T$ is independent.
+\end{theorem}
+\begin{proof}
+Assume a unique perfect matching exists. Orient edges in $\mathcal{D}_{M}(U)$ from $U$ to $E \setminus U$ if the edge is used in the matching,
+and from $E \setminus U$ to $U$ otherwise. Then this graph contains no directed cycles, as otherwise the matching would not be unique. Number
+vertices in $U \setminus T$ and $T \setminus U$ s.t. the matching uses edges $(x_{1}, y_{1}), \dots, (x_{k}, y_{k})$ and the topological ordering
+of the vertices is $x_{1}, y_{1}, x_{2}, \dots, x_{k}, y_{k}$.
+
+Suppose $T$ is dependent. Then it contains a circuit $C$. Assume that $y_{i}$ is the smallest-indexed vertex from $T \setminus U$ in the circuit.
+Such $i$ must exist as otherwise $C \subset U$ which contradicts the independence of $U$.
+Then for any $y_{j}$, $j > i$ in the circuit the edge $(x_{i}, y_{j})$ doesn't exist, hence $y_{j} \in span(U - x_{i})$,
+hence $span(C - y_{i}) \subset span(U - x_{i})$. But $C$ is a circuit, hence $y_{i} \in span(C - y_{i})$, hence $y_{i} \in span(U - x_{i})$,
+which contradicts the existence of the edge $(x_{i}, y_{i})$.
+\end{proof}
+
+For matroids $M_{1}, M_{2}$ and $U \in \mathcal{I}_{1} \cap \mathcal{I}_{2}$,
+we define the exchange graph $\mathcal{D}_{M_{1}, M_{2}}(U)$ as the bipartite graph with bipartition $U$ and $E \setminus U$,
+a directed edge from $x \in U$ to $y \in E \setminus U$ if $U - x + y \in \mathcal{I}_{1}$,
+and a directed edge from $y \in E \setminus U$ to $x \in U$ if $U - x + y \in \mathcal{I}_{2}$.
+
+\subsection{Matroid min-max theorem}
+\begin{theorem}
+(The matroid min-max theorem)
+
+Given two matroids on the same base set $M_{1} = (E, \mathcal{I}_{1}), M_{2} = (E, \mathcal{I}_{2})$, we have
+\begin{equation*}
+\max_{U \in \mathcal{I}_{1} \cap \mathcal{I}_{2}} |U| = \min_{T \subset E} r_{1}(T) + r_{2}(E \setminus T)
+\end{equation*}
+where $r_{1}$ is the rank-function for matroid $M_{1}$, and $r_{2}$ the rank-function for $M_{2}$ respectively.
+\end{theorem}
+\begin{proof}
+For any $U \in \mathcal{I}_{1} \cap \mathcal{I}_{2}$ and $T \subseteq E$, we have
+\begin{align*}
+|U|	&= |U \cap T| + |U \cap (E \setminus T)|\\
+	&= r(U \cap T) + r(U \cap (E \setminus T))\\
+	&\leq r(T) + r(E \setminus T)
+\end{align*}
+
+We'll prove that some $U$, exists $T$ s.t. the bound is tight by giving an algorithm that finds these sets $U$.
+The algorithm will start with $U = \emptyset$, and at every step either produce $U' \in \mathcal{I}_{1} \cap \mathcal{I}_{2}$
+with $|U'| = |U| + 1$ or find $T$ s.t. $U$ and $T$ achieve equality in the inequality.
+
+Define $Y_{1} = \{y \not\in U \mid U + y \in \mathcal{I}_{1}\}$ and $Y_{2} = \{y \not\in U \mid U + y \in \mathcal{I}_{2}\}$.
+If these sets intersect, take $y \in Y_{1} \cap Y_{2}$ and set $U' = U + x$.
+
+If there exists a $Y_{1}$-to-$Y_{2}$ path $y_{1}, x_{1}, \dots, x_{k-1}, y_{k}$ in $\mathcal{D}_{M_{1}, M_{2}}(U)$,
+we will find $U'$. Otherwise, we will find $T$.
+
+Assume now such a path $P$ exists. We claim that $U' = U \Delta P$ is independent in $M_{1}$ and $M_{2}$.
+First we'll show that $U' \in \mathcal{I}_{1}$. Define the matroid $M'_{1} = (E + x_{0}, \mathcal{I}'_{1})$
+with a new dummy element $x_{0}$ that doesn't affect independence, where
+\begin{equation*}
+\mathcal{I}'_{1} = \{U \subseteq (E + x_{0}) \mid U \setminus \{x_{0}\} \in \mathcal{I}_{1}\}
+\end{equation*}
+Now $U + x_{0} \in \mathcal{I}'_{1}$. We claim that there exists an unique matching between $U \cap P + x_{0}$ and $P \setminus U$.
+If this is the case, $U \Delta P \in \mathcal{I}'_{1}$, hence $U \Delta P \in \mathcal{I}_{1}$.
+
+At least one perfect matching exists, namely $(x_{0}, y_{1}), \dots, (x_{k-1}, y_{k})$. Assume it isn't unique.
+Then it contains the edge $(x_{i}, y_{j})$ where $j > i + 1$ for some $i, j$. If $i = 0$, this implies $y_{j} \in Y_{1}$,
+otherwise the directed edge $(x_{i}, y_{j})$ exists in $\mathcal{D}_{M_{1}, M_{2}}(U)$ which shortcuts the path. Both
+cases contradict the path being the shortest $Y_{1}$-to-$Y_{2}$ path, hence the perfect matching is unique and we are done.
+
+To show $U' \in \mathcal{I}_{2}$, we do the same with dummy element $x_{k}$ and unique perfect matching $(x_{1}, y_{1}), \dots, (x_{k}, y_{k})$.
+
+Now assume no $Y_{1}$-to-$Y_{2}$ path exists. Set $T = \{z \mid z \textit{ can reach a vertex in } Y_{2}\}$. We claim that for this $T$
+we have $r_{1}(T) = |U \cap T|$ and $r_{2}(E \setminus T) = |U \cap (E \setminus T)|$. This would imply the claimed equality $|U| = r_{1}(T) + r_{2}(E \setminus T)$.
+
+Assume first $r_{1}(T) > |U \cap T|$. Then exists $y \in T \setminus U$ s.t. $r_{1}(U \cap T + y) = |U \cap T| + 1$. But then either
+$U + y \in \mathcal{I}_{1}$ or we can take $x \in C_{1}(U, y)$, $x \neq y$ so that $U - x + y \in \mathcal{I}_{1}$. In either case $y \in Y_{1}$,
+but $y \in T$ hence it can reach a vertex in $Y_{2}$ and a $Y_{1}$-to-$Y_{2}$ path exists, a contradiction.
+
+Next assume $r_{2}(E \setminus T) > |U \cap (E \setminus T)|$. Then exists $y \in E \setminus T \setminus U$ s.t. $r_{2}(U \cap (E \setminus T) + y) = |U \cap (E \setminus T)| + 1$.
+But then either $U + y \in \mathcal{I}_{2}$ or we can take $x \in C_{2}(U, y)$ $x \neq y$ so that $U - x + y \in \mathcal{I}_{2}$. In either case
+$y \in Y_{2}$, which contradicts the selection of $y$ from $E \setminus T$.
+\end{proof}
+
+\section{Weighted matroid intersection}
+Given a weight function $c : E \mapsto R$, we define $c(T) = \sum_{x \in T} c(x)$.
+For a matroid $M = (E, \mathcal{I})$ we define the \textit{maximum-weight basis} as $\hat{r}(c) = \max_{B \in \mathcal{I}, |B| = r(E)} c(B)$.
+The main result of this section is the following theorem, which generalises the matroid min-max theorem to a weighted case:
+\begin{theorem}
+(The weight-splitting theorem)
+
+Given two matroids $M_{1} = (E, \mathcal{I}_{1})$ and $B_{2} = (E, \mathcal{I}_{2})$ of equal rank, we have
+\begin{equation*}
+\max_{B \in \mathcal{B}_{1} \cap \mathcal{B}_{2}} c(B) = \min_{c_{1} + c_{2} = c} \hat{r}_{1}(c_{1}) + \hat{r}_{2}(c_{2})
+\end{equation*}
+\end{theorem}
+
+We call a basis $B$ \textit{$c$-maximal} if $c(B) = \hat{r}(c)$. We define the maximum-weight basis matroid $M_{c} = (E, \mathcal{I}')$,
+where a set is independent if it can be extended to a $c$-maximal basis, i.e.
+\begin{equation*}
+\mathcal{I}' = \{U \mid \exists B \in \mathcal{I}\ :\ U \subset B, |B| = r(M), c(B) = \hat{r}(c)\}
+\end{equation*}
+We'll denote the rank function of $M_{c}$ by $r_{c}$.
+\begin{theorem}
+The maximum-weight basis matroid $M_{c} = (E, \mathcal{I}')$ is a matroid
+\end{theorem}
+\begin{proof}
+Since some basis must be maximal, $\emptyset \in M_{c}$. Subsets of independent sets are by definition independent. 
+
+Take any $A_{1}, A_{2} \in \mathcal{I}'$ with $|A_{1}| < |A_{2}|$. Extend $A_{2}$ to a $c$-maximal basis $B_{2}$, and
+extend $A_{1}$ to the $c$-maximal basis $B_{1}$ maximising $|B_{1} \cap B_{2}|$.
+
+If $B_{1} \subseteq A_{1} \cup B_{2}$, then
+\begin{equation*}
+B_{1} \subseteq (A_{2} \setminus A_{1}) \cup (A_{1} \cup (B_{2} \setminus A_{2}))
+\end{equation*}
+But
+\begin{equation*}
+|B_{1}| > |B_{2}| - (|A_{2}| - |A_{1}|) \geq |A_{1} \cup (B_{2} \setminus A_{2})|
+\end{equation*}
+hence exists $x \in B_{1} \cap (A_{2} \setminus A_{1})$, and $A_{1} \cup \{x\} \in \mathcal{I}'$.
+
+Otherwise, take $x \in B_{1} \setminus A_{1} \cup B_{2}$. By the strong basis exchange lemma there exists $y \in B_{2}$
+s.t. $B_{1} + y - x, B_{2} - y + x \in \mathcal{I}$. Since $B_{1}$ and $B_{2}$ are $c$-maximal, we have $c(B_{1}) \geq c(B_{1} + y - x)$ and
+$c(B_{2}) \geq c(B_{2} - y + x)$, hence $c(y) - c(x) \leq 0$ and $c(x) - c(y) \leq 0$, hence $c(x) = c(y)$ and $B'_{1} = B_{1} + y - x \in \mathcal{I}'$.
+But $A_{1} \subset B'_{1}$ and $|B'_{1} \cap B_{2}| = |B_{1} \cap B_{2}| + 1$, which contradicts the selection of $B_{1}$.
+\end{proof}
+
+\end{document}

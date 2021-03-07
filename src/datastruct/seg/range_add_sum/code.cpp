@@ -1,9 +1,9 @@
 // Segment tree for range addition and range sum. It is also easy to modify:
-// just change the functions apply ... combine, and replace 0 with your neutral element.
+// just change NEUT, apply, and combine to what you need, and rename rangeSum, rangeAdd
 class SegTree {
 	private:
-		vector<ll> seg;
-		vector<ll> tag;
+		const ll NEUT = 0; 
+		vector<ll> seg, tag;
 		int h = 1;
 
 		// Returns length of interval corresponding to position i
@@ -22,7 +22,7 @@ class SegTree {
 		ll combine(ll a, ll b) { return a + b; }
 
 		ll recGet(int a, int b, int i, int ia, int ib) {
-			if (ib <= a || b <= ia) return 0;
+			if (ib <= a || b <= ia) return NEUT;
 			if (a <= ia && ib <= b) return seg[i];
 			push(i);
 			int im = (ia + ib) >> 1;
@@ -44,9 +44,9 @@ class SegTree {
 	public:
 		SegTree(int n) {
 			while(h < n) h *= 2;
-			seg.resize(2*h, 0);
+			seg.resize(2*h, NEUT);
 			tag.resize(h, 0);
 		}
-		ll sum(int a, int b) { return recGet(a, b+1, 1, 0, h); }
-		void add(int a, int b, ll v) { recApply(a, b+1, v, 1, 0, h); }
+		ll rangeSum(int a, int b) { return recGet(a, b+1, 1, 0, h); }
+		void rangeAdd(int a, int b, ll v) { recApply(a, b+1, v, 1, 0, h); }
 };

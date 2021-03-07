@@ -17,8 +17,8 @@ T rand(T a, T b) {
 
 const int TC = 1000;
 const int Q = 1000;
-const ll V1 = 1e9;
-const ll V2 = 1e9;
+const ll V1 = 10;
+const ll V2 = 10;
 
 void genTest(ofstream& fout) {
 	int q = rand(1, Q);

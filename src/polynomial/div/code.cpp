@@ -33,3 +33,14 @@ vector<int> polyDiv(vector<int> p, vector<int> q) {
 	reverse(ra.begin(), ra.end());
 	return ra;
 }
+
+template<int P>
+vector<int> polyMod(const vector<int>& p, const vector<int>& q) {
+	if (q.size() > p.size()) return p;
+	vector<int> div = polyDiv<P>(p, q);
+	vector<int> prod = polyMult<P>(q, div);
+	vector<int> rem = p;
+	for (int i = 0; i < p.size(); ++i) rem[i] = mSub(rem[i], prod[i], P);
+	while(rem.size() > 1 && rem.back() == 0) rem.pop_back();
+	return rem;
+}

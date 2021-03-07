@@ -17,6 +17,9 @@ void solve() {
 
 	vector<int> c = polyDiv<NTTP[0]>(a, b);
 	for (auto v : c) cout << v << ' '; cout << '\n';
+
+	vector<int> r = polyMod<NTTP[0]>(a, b);
+	for (auto v : r) cout << v << ' '; cout << '\n';
 }
 
 int main() {

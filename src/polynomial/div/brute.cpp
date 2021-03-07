@@ -23,6 +23,9 @@ void solve() {
 	}
 
 	for (auto v : c) cout << v << ' '; cout << '\n';
+	
+	while(a.size() > 1 && a.back() == 0) a.pop_back();
+	for (auto v : a) cout << v << ' '; cout << '\n';
 }
 
 int main() {

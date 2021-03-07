@@ -17,11 +17,11 @@ void solve() {
 			int a, b;
 			ll v;
 			cin >> a >> b >> v;
-			seg.add(a, b, v);
+			seg.rangeAdd(a, b, v);
 		} else if (op == "sum") {
 			int a, b;
 			cin >> a >> b;
-			cout << seg.sum(a, b) << '\n';
+			cout << seg.rangeSum(a, b) << '\n';
 		}
 	}
 }

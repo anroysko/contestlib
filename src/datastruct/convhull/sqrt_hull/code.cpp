@@ -35,9 +35,10 @@ class ConvHull {
 		void clear() { hull.clear(); }
 };
 
-// Stores an array of functions f_i(x) = a_i (x + y_i) + b_i
-// Does operations in O(sqrt(n) log n) time
-class SqrtHull {
+// Stores an array A, which supports the following operations:
+//	rangeAdd(l, r, base, inc): set A[i] <- A[i] + base + inc(i-l) for l <= i <= r
+//	rangeMin(l, r): return minimum A[i] over l <= i <= r
+class ArithMin {
 	private:
 		const ll INF = 4 * (ll)1e18;
 		vector<Line> lines;
@@ -46,29 +47,34 @@ class SqrtHull {
 		int n, k;
 
 		void build(int j) {
-			int a = j*k;
-			int b = min(n, a+k);
-			vector<Line> ord(b-a);
-			for (int i = a; i < b; ++i) ord[i-a] = lines[i];
+			vector<Line> ord(k);
+			for (int i = 0; i < k; ++i) ord[i] = lines[i+j*k];
 			sort(ord.begin(), ord.end());
 
 			blocks[j].clear();
 			for (auto ln : ord) blocks[j].addLine(ln);
 		}
 	public:
-		SqrtHull(const vector<Line>& ini) : n(ini.size()), lines(ini) {
+		ArithMin(const vector<ll>& vec) : n(vec.size()) {
 			for (k = 1; k*k < n;) ++k;
 			int m = (n+k-1) / k;
+
+			lines.resize(m*k);
+			for (int i = 0; i < n; ++i) {
+				lines[i].a = i;
+				lines[i].b = vec[i];
+			}
+
 			blocks.resize(m);
 			adds.resize(m, 0);
 			for (int j = 0; j < m; ++j) build(j);
 		}
 
-		// Adds y_{i} += dy for a <= i <= b
-		void rangeAdd(int a, int b, ll dy) {
-			int aj = a / k + 1;
+		void rangeAdd(int a, int b, ll base, ll inc) {
+			++b;
+			int aj = (a+(k-1)) / k;
 			int bj = b / k;
-			for (int j = aj; j < bj; ++j) adds[j] += dy;
+			for (int j = aj; j < bj; ++j) adds[j] += ;
 			for (; a < min(b+1, aj*k); ++a) lines[a].b += lines[a].a * dy;
 			for (; b >= max(a, bj*k); --b) lines[b].b += lines[b].a * dy;
 			build(aj-1);

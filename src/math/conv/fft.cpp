@@ -1,14 +1,3 @@
-#include <iostream>
-#include <cmath>
-#include <vector>
-#include <complex>
-#include <assert.h>
-using namespace std;
-
-const double PI = atan((double)1) * 4;
-
-// Applies the bit-reverse permutation to the given vector
-// Time Complexity: O(n log n)
 template<class T>
 void bitReverse(vector<T>& vec) {
 	int n = vec.size();
@@ -21,76 +10,62 @@ void bitReverse(vector<T>& vec) {
 	}
 }
 
-// Iterative FFT.
-// Assumes that pol.size() = 2^m for some integer m, and that nth_root is the nth root of unity or its inverse.
-// Time Complexity: O(n log n)
-void fft(vector<complex<double>>& pol, complex<double> nth_root) {
-	int n = pol.size();
-	bitReverse(pol); // Lets us calculate FFT iteratively
 
-	int m = 0;
-	while((1 << m) < n) ++m;
-	vector<complex<double>> pows(m); // pows[i] = nth_root^(2^(m-1 - i))
-	pows.back() = nth_root;
-	for (int i = m - 2; i >= 0; --i) pows[i] = pows[i + 1] * pows[i + 1];
-	
-	for (int k = 0; k < m; ++k) {
-		int h = 1 << k;	// half of step length
-		int len = h << 1; // step length
-		complex<double> root = pows[k];
-		for (int j = 0; j < n; j += len) {
-			complex<double> curr = 1;
+void fft(vector<complex<ld>>& pol, complex<ld> r) {
+	int n = pol.size();
+	bitReverse(pol);
+
+	// roots[h + x] = r^(nx / 2h) when h = 2^k and 0 <= x < h
+	// Calculated this way to limit precision error
+	vector<complex<ld>> roots(n, {1, 0});
+	for (int h = n/2; h > 1; h >>= 1, r *= r) roots[h+1] = r;
+	for (int h = 4; h < n; h <<= 1) {
+		for (int x = h+2; x < 2*h; x += 2) {
+			roots[x] = roots[x >> 1];
+			roots[x ^ 1] = roots[x] * roots[h+1];
+		}
+	}
+
+	for (int h = 1; h < n; h <<= 1) {
+		for (int j = 0; j < n; j += 2*h) {
 			for (int i = j; i < j + h; ++i) {
-				auto tmp = curr * pol[i + h];
-				pol[i + h] = pol[i] -  tmp;
+				auto tmp = roots[h + (i-j)] * pol[i + h];
+				pol[i + h] = pol[i] - tmp;
 				pol[i] += tmp;
-				curr *= root;
 			}
 		}
 	}
 }
 
-// Calculates the product of two polynomials a and b.
-// Time Complexity: O(n log n) where n = O(max(a.size(), b.size()))
-vector<double> polyMult(const vector<double>& a, const vector<double>& b) {
-	int as = a.size(), bs = b.size();
-	int n = 1;
+// Polynomial multiplication: res[k] = \sum_{t = 0}^{k} a[t] b[k-t]
+template<class T>
+vector<T> polyMult(const vector<T>& a, const vector<T>& b) {
+	int as = a.size(), bs = b.size(), n = 1;
 	while(n < (as + bs)) n <<= 1;
-	
-	vector<complex<double>> ap (n, 0), bp (n, 0);
-	for (int i = 0; i < as; ++i) ap[i] = a[i];
-	for (int i = 0; i < bs; ++i) bp[i] = b[i];
-	
-	complex<double> nth_root = {cos(2*PI/n), sin(2*PI/n)};
-	fft(ap, nth_root);
-	fft(bp, nth_root);
 
-	vector<complex<double>> cp (n);
-	for (int i = 0; i < n; ++i) cp[i] = ap[i] * bp[i];
+	const ld PI = atan((ld)1) * 4;
+	complex<ld> nth_root = {cos(2*PI/n), sin(2*PI/n)};
 	
-	fft(cp, conj(nth_root)); // conj(nth_root) = 1 / nth_root, since len(nth_root) = 1.
-	
-	vector<double> res(as + bs - 1);
-	for (int i = 0; i < res.size(); ++i) res[i] = cp[i].real() / n;
-	return res;
-}
+	vector<complex<ld>> vec(n, 0);
+	for (int i = 0; i < n; ++i) vec[i] = {(i < as ? a[i] : 0), (i < bs ? b[i] : 0)};
+	fft(vec, nth_root);
 
-int main() {
-	int as, bs;
-	cin >> as >> bs;
-	vector<double> a(as);
-	vector<double> b(bs);
-	for (int i = 0; i < as; ++i) cin >> a[i];
-	for (int i = 0; i < bs; ++i) cin >> b[i];
-	
-	vector<double> ab = polyMult(a, b);
-	for (int i = 0; i < ab.size(); ++i) cout << ab[i] << ' '; cout << '\n';
-	
-	vector<double> ans (as+bs-1, 0);
-	for (int i = 0; i < as; ++i) {
-		for (int j = 0; j < bs; ++j) {
-			ans[i+j] += a[i] * b[j];
-		}
+	// https://en.wikipedia.org/wiki/Discrete_Fourier_transform#DFT_of_real_and_purely_imaginary_signals
+	// ans1[i] = conj(ans1[n-i])
+	// ans2[i] = -conj(ans2[n-i])
+	for (int i = 0; i < n-i; ++i) {
+		ld va = (vec[i] + conj(vec[n-1-i])) / 2;
+		ld vb = ((vec[i] - conj(vec[n-1-i])) / 2);
+		vb = {vb.imag(), vb.real()};
+
+		vec[i] = va * vb;
+		vec[n-1-i] = conj(va) * -conj(vb);
 	}
-	for (int i = 0; i < ans.size(); ++i) cout << ans[i] << ' '; cout << '\n';
+	fft(vec, conj(nth_root));
+	
+	vector<T> res(as + bs - 1);
+	for (int i = 0; i < as + bs - 1; ++i) {
+		res[i] = vec[i].real() / n; // round(cp[i].real() / n); // UNCOMMENT FOR INTEGRAL T
+	}
+	return res;
 }

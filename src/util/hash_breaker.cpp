@@ -1,14 +1,7 @@
-#include <iostream>
-#include <utility>
-#include <vector>
-#include <algorithm>
-
-#include <random> // random
-#include <stdlib.h> // srand
-
+#include <bits/stdc++.h>
 using namespace std;
-typedef long long ll;
-typedef __int128 lll;
+using ll = long long;
+using lll = __int128;
 const pair<vector<int>, vector<int>> fail = {{},{}};
 
 // ***

@@ -1,0 +1,8 @@
+test.cpp: In instantiation of ‘std::vector<_Tp> polyMult(const std::vector<_Tp>&, const std::vector<_Tp>&) [with T = long long int]’:
+test.cpp:85:34:   required from here
+test.cpp:55:48: warning: narrowing conversion of ‘((i < as) ? ((__gnu_cxx::__alloc_traits<std::allocator<long long int>, long long int>::value_type)(& a)->std::vector<long long int>::operator[](((std::vector<long long int>::size_type)i))) : 0)’ from ‘long long int’ to ‘long double’ [-Wnarrowing]
+   55 |  for (int i = 0; i < n; ++i) vec[i] = {(i < as ? a[i] : 0), (i < bs ? b[i] : 0)};
+      |                                        ~~~~~~~~^~~~~~~~~~~
+test.cpp:55:69: warning: narrowing conversion of ‘((i < bs) ? ((__gnu_cxx::__alloc_traits<std::allocator<long long int>, long long int>::value_type)(& b)->std::vector<long long int>::operator[](((std::vector<long long int>::size_type)i))) : 0)’ from ‘long long int’ to ‘long double’ [-Wnarrowing]
+   55 |  for (int i = 0; i < n; ++i) vec[i] = {(i < as ? a[i] : 0), (i < bs ? b[i] : 0)};
+      |                                                             ~~~~~~~~^~~~~~~~~~~
