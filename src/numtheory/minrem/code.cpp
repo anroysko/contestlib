@@ -11,15 +11,27 @@ ll modInv(ll a, ll p) {
 ll gcd(ll a, ll b) { return (b == 0 ? a : gcd(b, a % b)); }
 ll mSub(ll a, ll b, ll m) { return (a >= b ? a - b : a - b + m); }
 ll posMod(ll a, ll m) { ll res = a % m; return (res < 0 ? res + m : res); }
+ll getSteps(ll t, ll ia, ll b, ll m) { return mSub(t, b, m) * ia % m; }
 
 // Returns minimum value of ax + b (mod m) for x \in [0, k]. O(log m) time
 ll minRem(ll a, ll b, ll m, ll k) {
 	for (ll g = gcd(a, m); g > 1;) return g * minRem(a/g, b/g, m/g, k) + (b % g);
 	for (ll b0 = b, m0 = m, ia0 = modInv(a, m), na, nb, nm; a; a = na, b = nb, m = nm) {
-		na = posMod(-m, a);
-		nb = (b < a ? b : posMod(b - m, a));
-		nm = a;
-		if (mSub(nb, b0, m0) * ia0 % m0 > k) break;
+		if (a > m - a) {
+			na = a % (m - a);
+			nb = b % (m - a);
+			nm = m - a;
+
+			for (ll steps = getSteps(nb, ia0, b0, m0); steps > k;) {
+				ll add = steps - getSteps(nb + nm, ia0, b0, m0);
+				return nb + nm * ((steps - k + (add - 1)) / add);
+			}
+		} else {
+			na = posMod(-m, a);
+			nb = (b < a ? b : posMod(b - m, a));
+			nm = a;
+			if (getSteps(nb, ia0, b0, m0) > k) break;
+		}
 	}
 	return b;
 }
