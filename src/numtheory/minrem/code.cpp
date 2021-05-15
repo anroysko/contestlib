@@ -21,7 +21,6 @@ ll minRem(ll a, ll b, ll m, ll k) {
 			na = a % (m - a);
 			nb = b % (m - a);
 			nm = m - a;
-
 			for (ll steps = getSteps(nb, ia0, b0, m0); steps > k;) {
 				ll add = steps - getSteps(nb + nm, ia0, b0, m0);
 				return nb + nm * ((steps - k + (add - 1)) / add);
