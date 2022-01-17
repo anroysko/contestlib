@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <unistd.h>
 #include <immintrin.h>
 using namespace std;
 using ull = unsigned long long;
@@ -8,7 +9,7 @@ using uint = unsigned int;
 struct Montgomery {
 	private:
 		const ull R = 1ull << 32;
-		const uint P, MC, RR;
+		const uint MC, RR, P2;
 		__m256i p2_vec, p_vec, mc_vec, one_vec, rr_vec;
 		
 		static ull modPow(ull a, ull b, ull c) {
@@ -26,7 +27,9 @@ struct Montgomery {
 			return _mm256_add_epi64(t, kp);
 		}
 	public:
-		Montgomery(uint P) : P(P), RR((R % P) * R % P), MC((R * modPow(R % P, P - 2, P) - 1) / P) {
+		const uint P;
+
+		Montgomery(uint P) : P(P), P2(2*P), RR((R % P) * R % P), MC((R * modPow(R % P, P - 2, P) - 1) / P) {
 			p2_vec = _mm256_set1_epi32(2*P);
 			p_vec = _mm256_set1_epi64x(P);
 			mc_vec = _mm256_set1_epi64x(MC);
@@ -39,9 +42,10 @@ struct Montgomery {
 		///////////////////////
 
 		uint transform(uint v) const { return mul(v, RR); } // standard uint -> mont representation
-		uint reverse(uint v) const { return mul(v, 1) % P; } // mont representation -> standard uint
-		uint add(uint a, uint b) const { return (a+b < 2*P ? a+b : a+b - 2*P); }
-		uint sub(uint a, uint b) const { return (a < b) ? (2*P - b + a) : (a - b); }
+		uint reverse(uint v) const { uint r = mul(v, 1); return r >= P ? r - P : r; } // mont representation -> standard uint
+		uint add(uint a, uint b) const { uint r = a + b - P2; return r + (P2 & -(r >> 31)); }
+		uint sub(uint a, uint b) const { uint r = a - b; return r + (P2 & -(r >> 31)); }
+
 		uint inv(uint v) const { return pow(v, P - 2); }
 		uint mul(uint a, uint b) const {
 			ull t = (ull)a * b; // < 4P^2
@@ -64,14 +68,15 @@ struct Montgomery {
 		__m256i transform(__m256i a) const { return mul(a, rr_vec); }
 		__m256i reverse(__m256i a) const { return mul(a, one_vec); } // WARNING: result is in [0, 2P) not [0, P)
 		__m256i add(__m256i a, __m256i b) const {
-			__m256i res = _mm256_add_epi32(a, b);
-			__m256i sub = _mm256_sub_epi32(res, p2_vec);
-			__m256i mask = _mm256_srai_epi32(sub, 32);
-			return _mm256_blendv_epi8(sub, res, mask);
+			__m256i tmp = _mm256_add_epi32(a, b);
+			__m256i res = _mm256_sub_epi32(tmp, p2_vec);
+			__m256i mask = _mm256_srai_epi32(res, 32);
+			__m256i add = _mm256_and_si256(p2_vec, mask);
+			return _mm256_add_epi32(res, add);
 		}
 		__m256i sub(__m256i a, __m256i b) const {
 			__m256i res = _mm256_sub_epi32(a, b);
-			__m256i mask = _mm256_cmpgt_epi32(b, a);
+			__m256i mask = _mm256_srai_epi32(res, 32);
 			__m256i add = _mm256_and_si256(p2_vec, mask);
 			return _mm256_add_epi32(res, add);
 		}
@@ -81,10 +86,11 @@ struct Montgomery {
 
 struct NTT {
 	private:
+		const int TR = 64; // Point where change to iterative happens, MUST BE A POWER OF TWO >= 64!!
 		Montgomery mt;
-		vector<uint> mults[2];
+		vector<uint> mults[2], ol_mults[2], aux;
 
-		void fwdButterfly(uint* pos0, uint* pos1, uint* mult) {
+		void fwdButterfly(uint* pos0, uint* pos1, uint* mult) const {
 			__m256i v0 = _mm256_loadu_si256((__m256i*)pos0);
 			__m256i v1 = _mm256_loadu_si256((__m256i*)pos1);
 			__m256i mu_lo = _mm256_loadu_si256((__m256i *)mult);
@@ -100,7 +106,7 @@ struct NTT {
 			_mm256_storeu_si256((__m256i*)pos0, res_add);
 			_mm256_storeu_si256((__m256i*)pos1, res_sub);
 		}
-		void invButterfly(uint* pos0, uint* pos1, uint* mult) {
+		void invButterfly(uint* pos0, uint* pos1, uint* mult) const {
 			__m256i v0 = _mm256_loadu_si256((__m256i *) pos0);
 			__m256i v1_lo = _mm256_loadu_si256((__m256i*) pos1);
 			__m256i mu_lo = _mm256_loadu_si256((__m256i*) mult);
@@ -120,20 +126,22 @@ struct NTT {
 
 		// Forward direction
 		void fntt(uint* arr, int h) {
-			if (h <= 64) {
-				int n = 2*h;
-				for (; h > 8; h >>= 1) {
-					for (int s = 0; s < n; s += 2*h) {
+			if (h <= TR) {
+				int n = h/4;
+				for (; h >= n; h >>= 1) {
+					for (int s = 0; s < 8*n; s += 2*h) {
 						for (int i = s; i < s + h; i += 8) fwdButterfly(&arr[i], &arr[i + h], &mults[0][i + h - s]);
 					}
 				}
+
+				for (int j = 0; j < 8; ++j) {
+					for (int i = 0; i < n; ++i) aux[8*i + j] = arr[i + n*j];
+				}
+				for (int i = 0; i < 8*n; ++i) arr[i] = aux[i];
+
 				for (; h > 0; h >>= 1) {
 					for (int s = 0; s < n; s += 2*h) {
-						for (int i = s; i < s + h; ++i) {
-							uint v0 = arr[i], v1 = arr[i + h];
-							arr[i] = mt.add(v0, v1);
-							arr[i + h] = mt.mul(mt.sub(v0, v1), mults[0][i + h - s]);
-						}
+						for (int i = s; i < s + h; ++i) fwdButterfly(&arr[8*i], &arr[8*(i + h)], &ol_mults[0][8*(i + h - s)]);
 					}
 				}
 			} else {
@@ -145,19 +153,21 @@ struct NTT {
 
 		// Inverse direction
 		void intt(uint* arr, int h) {
-			if (h <= 64) {
-				int n = 2*h;
-				for (h = 1; h < min(8, n); h <<= 1) {
+			if (h <= TR) {
+				int n = h / 4;
+				for (h = 1; h < n; h <<= 1) {
 					for (int s = 0; s < n; s += 2*h) {
-						for (int i = s; i < s + h; ++i) {
-							uint v0 = arr[i], v1 = mt.mul(arr[i + h], mults[1][i + h - s]);
-							arr[i] = mt.add(v0, v1);
-							arr[i + h] = mt.sub(v0, v1);
-						}
+						for (int i = s; i < s + h; ++i) invButterfly(&arr[8*i], &arr[8*(i + h)], &ol_mults[1][8*(i + h - s)]);
 					}
 				}
-				for (; h < n; h <<= 1) {
-					for (int s = 0; s < n; s += 2*h) {
+
+				for (int j = 0; j < 8; ++j) {
+					for (int i = 0; i < n; ++i) aux[i + n*j] = arr[8*i + j];
+				}
+				for (int i = 0; i < 8*n; ++i) arr[i] = aux[i];
+
+				for (; h < 8*n; h <<= 1) {
+					for (int s = 0; s < 8*n; s += 2*h) {
 						for (int i = s; i < s + h; i += 8) invButterfly(&arr[i], &arr[i + h], &mults[1][i + h - s]);
 					}
 				}
@@ -168,16 +178,17 @@ struct NTT {
 			}
 		}
 	public:
-		// max_n: a value s.t. res.size() <= max_n in every polyMult call
+		// n: value s.t. res.size() <= n in every polyMult call
 		// P: must be a prime s.t. 3 is a generator and max_n | P - 1
-		NTT(int max_n, uint P = 998244353) : mt(P) {
-			int n = 1;
-			while(n < max_n) n <<= 1;
+		NTT(int n, uint P = 998244353) : mt(P), aux(2*TR) {
+			n = max(n, TR);
+			while(n & (n-1)) n += n ^ (n & (n - 1));
 			mults[0].resize(n); mults[1].resize(n);
 
 			array<uint, 2> roots;
 			roots[1] = mt.pow(mt.transform(3), (P - 1) / n);
 			roots[0] = mt.pow(roots[1], n - 1);
+			
 			for (int t = (n >> 1); t > 0; t >>= 1) {
 				for (int j = 0; j <= 1; ++j) {
 					uint cur = mt.transform(1);
@@ -185,22 +196,101 @@ struct NTT {
 					roots[j] = mt.mul(roots[j], roots[j]);
 				}
 			}
+			ol_mults[0].resize(2*TR); ol_mults[1].resize(2*TR);
+			for (int i = 0; i < 2*TR; ++i) {
+				for (int j = 0; j <= 1; ++j) ol_mults[j][i] = mults[j][i >> 3];
+			}
 		}
-		vector<int> polyMult(const vector<int>& a, const vector<int>& b) {
+		vector<int> polyMul(const vector<int>& a, const vector<int>& b) {
 			int n = 1, m = (int)a.size() + (int)b.size() - 1;
+			vector<int> res(m, 0);
 			while(n < m) n <<= 1;
-
-			vector<uint> as(n, 0), bs(n, 0);
-			for (int i = 0; i < a.size(); ++i) as[i] = mt.transform(a[i]);
-			for (int i = 0; i < b.size(); ++i) bs[i] = mt.transform(b[i]);
-			fntt(as.data(), n / 2); fntt(bs.data(), n / 2);
-
-			uint mult = mt.inv(mt.transform(n));
-			for (int i = 0; i < n; ++i) as[i] = mt.mul(mt.mul(as[i], bs[i]), mult);
-			intt(as.data(), n / 2);
-
-			vector<int> res(m);
-			for (int i = 0; i < m; ++i) res[i] = mt.reverse(as[i]);
+			if (n < TR) {
+				for (int x = 0; x < a.size(); ++x) {
+					for (int y = 0; y < b.size(); ++y) res[x + y] = (res[x + y] + (ull)a[x] * b[y]) % mt.P;
+				}
+			} else {
+				vector<uint> as(n, 0), bs(n, 0);
+				for (int i = 0; i < a.size(); ++i) as[i] = mt.transform(a[i]);
+				for (int i = 0; i < b.size(); ++i) bs[i] = mt.transform(b[i]);
+				fntt(as.data(), n / 2); fntt(bs.data(), n / 2);
+				uint mult = mt.inv(mt.transform(n));
+				for (int i = 0; i < n; ++i) as[i] = mt.mul(mt.mul(as[i], bs[i]), mult);
+				intt(as.data(), n / 2);
+				for (int i = 0; i < m; ++i) res[i] = mt.reverse(as[i]);
+			}
 			return res;
 		}
 };
+
+struct FastIO {
+	private:
+		const static int K = 1 << 15;
+		array<char, K> in_buf, out_buf;
+		int in_fd, out_fd, in_x = K, out_x = 0;
+
+		void refillBuffer() {
+			if (in_x < K) {
+				memmove(in_buf.data(), in_buf.data() + in_x, K - in_x);
+				in_x = K - in_x;
+			} else in_x = 0;
+			read(in_fd, in_buf.data() + in_x, K - in_x);
+			in_x = 0;
+		}
+		void flush() {
+			if (out_x) write(out_fd, out_buf.data(), out_x);
+			out_x = 0;
+		}
+	public:
+		FastIO(FILE* in = stdin, FILE* out = stdout) : in_fd(fileno(in)), out_fd(fileno(out)) {}
+		~FastIO() { flush(); close(out_fd); }
+
+		int readInt() {
+			if (in_x >= K / 2) refillBuffer();
+			while(in_buf[in_x] < '-') ++in_x;
+
+			int res = 0, sg = 1;
+			if (in_buf[in_x] == '-') sg = -1, ++in_x;
+			for (; in_buf[in_x] > '-'; ++in_x) res = (10 * res + (in_buf[in_x] - '0'));
+			return sg * res;
+		}
+		void printChar(char c) {
+			out_buf[out_x] = c;
+			++out_x;
+			if (out_x >= K / 2) flush();
+		}
+		void printInt(int num) {
+			if (num == 0) {
+				out_buf[out_x] = '0';
+				++out_x;
+			} else if (num < 0) {
+				out_buf[out_x] = '-';
+				++out_x;
+			}
+			int s = out_x;
+			for (; num > 0; num /= 10, ++out_x) out_buf[out_x] = '0' + (num % 10);
+			for (int t = out_x - 1; s < t; ++s, --t) swap(out_buf[s], out_buf[t]);
+			if (out_x >= K / 2) flush();
+		}
+};
+
+int main() {
+	const int P = 998244353;
+	FastIO io;
+
+	int n, m;
+	n = io.readInt();
+	m = io.readInt();
+	NTT ntt(n+m-1, P);
+
+	vector<int> a(n), b(m);
+	for (int& x : a) x = io.readInt();
+	for (int& x : b) x = io.readInt();
+
+	vector<int> res = ntt.polyMul(a, b);
+	for (int v : res) {
+		io.printInt(v);
+		io.printChar(' ');
+	}
+	io.printChar('\n');
+}
