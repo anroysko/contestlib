@@ -1,15 +1,10 @@
-#include <bits/stdc++.h>
-#include <unistd.h>
 #include <immintrin.h>
-using namespace std;
-using ull = unsigned long long;
-using uint = unsigned int;
 
 // Class for both scalar and vectorised modular operations by non-constant prime modulo P < 2^30.
 struct Montgomery {
 	private:
 		const ull R = 1ull << 32;
-		const uint MC, RR, P2;
+		const uint MC, RR;
 		__m256i p2_vec, p_vec, mc_vec, one_vec, rr_vec;
 		
 		static ull modPow(ull a, ull b, ull c) {
@@ -29,7 +24,7 @@ struct Montgomery {
 	public:
 		const uint P;
 
-		Montgomery(uint P) : P(P), P2(2*P), RR((R % P) * R % P), MC((R * modPow(R % P, P - 2, P) - 1) / P) {
+		Montgomery(uint P) : P(P), RR((R % P) * R % P), MC((R * modPow(R % P, P - 2, P) - 1) / P) {
 			p2_vec = _mm256_set1_epi32(2*P);
 			p_vec = _mm256_set1_epi64x(P);
 			mc_vec = _mm256_set1_epi64x(MC);
@@ -42,10 +37,9 @@ struct Montgomery {
 		///////////////////////
 
 		uint transform(uint v) const { return mul(v, RR); } // standard uint -> mont representation
-		uint reverse(uint v) const { uint r = mul(v, 1); return r >= P ? r - P : r; } // mont representation -> standard uint
-		uint add(uint a, uint b) const { uint r = a + b - P2; return r + (P2 & -(r >> 31)); }
-		uint sub(uint a, uint b) const { uint r = a - b; return r + (P2 & -(r >> 31)); }
-
+		uint reverse(uint v) const { return mul(v, 1) % P; } // mont representation -> standard uint
+		uint add(uint a, uint b) const { return (a+b < 2*P ? a+b : a+b - 2*P); }
+		uint sub(uint a, uint b) const { return (a < b) ? (2*P - b + a) : (a - b); }
 		uint inv(uint v) const { return pow(v, P - 2); }
 		uint mul(uint a, uint b) const {
 			ull t = (ull)a * b; // < 4P^2
@@ -68,15 +62,14 @@ struct Montgomery {
 		__m256i transform(__m256i a) const { return mul(a, rr_vec); }
 		__m256i reverse(__m256i a) const { return mul(a, one_vec); } // WARNING: result is in [0, 2P) not [0, P)
 		__m256i add(__m256i a, __m256i b) const {
-			__m256i tmp = _mm256_add_epi32(a, b);
-			__m256i res = _mm256_sub_epi32(tmp, p2_vec);
-			__m256i mask = _mm256_srai_epi32(res, 32);
-			__m256i add = _mm256_and_si256(p2_vec, mask);
-			return _mm256_add_epi32(res, add);
+			__m256i res = _mm256_add_epi32(a, b);
+			__m256i sub = _mm256_sub_epi32(res, p2_vec);
+			__m256i mask = _mm256_srai_epi32(sub, 32);
+			return _mm256_blendv_epi8(sub, res, mask);
 		}
 		__m256i sub(__m256i a, __m256i b) const {
 			__m256i res = _mm256_sub_epi32(a, b);
-			__m256i mask = _mm256_srai_epi32(res, 32);
+			__m256i mask = _mm256_cmpgt_epi32(b, a);
 			__m256i add = _mm256_and_si256(p2_vec, mask);
 			return _mm256_add_epi32(res, add);
 		}
@@ -90,7 +83,7 @@ struct NTT {
 		Montgomery mt;
 		vector<uint> mults[2], ol_mults[2], aux;
 
-		void fwdButterfly(uint* pos0, uint* pos1, uint* mult) const {
+		void fwdButterfly(uint* pos0, uint* pos1, uint* mult) {
 			__m256i v0 = _mm256_loadu_si256((__m256i*)pos0);
 			__m256i v1 = _mm256_loadu_si256((__m256i*)pos1);
 			__m256i mu_lo = _mm256_loadu_si256((__m256i *)mult);
@@ -106,7 +99,7 @@ struct NTT {
 			_mm256_storeu_si256((__m256i*)pos0, res_add);
 			_mm256_storeu_si256((__m256i*)pos1, res_sub);
 		}
-		void invButterfly(uint* pos0, uint* pos1, uint* mult) const {
+		void invButterfly(uint* pos0, uint* pos1, uint* mult) {
 			__m256i v0 = _mm256_loadu_si256((__m256i *) pos0);
 			__m256i v1_lo = _mm256_loadu_si256((__m256i*) pos1);
 			__m256i mu_lo = _mm256_loadu_si256((__m256i*) mult);
@@ -222,75 +215,3 @@ struct NTT {
 			return res;
 		}
 };
-
-struct FastIO {
-	private:
-		const static int K = 1 << 15;
-		array<char, K> in_buf, out_buf;
-		int in_fd, out_fd, in_x = K, out_x = 0;
-
-		void refillBuffer() {
-			if (in_x < K) {
-				memmove(in_buf.data(), in_buf.data() + in_x, K - in_x);
-				in_x = K - in_x;
-			} else in_x = 0;
-			read(in_fd, in_buf.data() + in_x, K - in_x);
-			in_x = 0;
-		}
-		void flush() {
-			if (out_x) write(out_fd, out_buf.data(), out_x);
-			out_x = 0;
-		}
-	public:
-		FastIO(FILE* in = stdin, FILE* out = stdout) : in_fd(fileno(in)), out_fd(fileno(out)) {}
-		~FastIO() { flush(); close(out_fd); }
-
-		int readInt() {
-			if (in_x >= K / 2) refillBuffer();
-			while(in_buf[in_x] < '-') ++in_x;
-
-			int res = 0, sg = 1;
-			if (in_buf[in_x] == '-') sg = -1, ++in_x;
-			for (; in_buf[in_x] > '-'; ++in_x) res = (10 * res + (in_buf[in_x] - '0'));
-			return sg * res;
-		}
-		void printChar(char c) {
-			out_buf[out_x] = c;
-			++out_x;
-			if (out_x >= K / 2) flush();
-		}
-		void printInt(int num) {
-			if (num == 0) {
-				out_buf[out_x] = '0';
-				++out_x;
-			} else if (num < 0) {
-				out_buf[out_x] = '-';
-				++out_x;
-			}
-			int s = out_x;
-			for (; num > 0; num /= 10, ++out_x) out_buf[out_x] = '0' + (num % 10);
-			for (int t = out_x - 1; s < t; ++s, --t) swap(out_buf[s], out_buf[t]);
-			if (out_x >= K / 2) flush();
-		}
-};
-
-int main() {
-	const int P = 998244353;
-	FastIO io;
-
-	int n, m;
-	n = io.readInt();
-	m = io.readInt();
-	NTT ntt(n+m-1, P);
-
-	vector<int> a(n), b(m);
-	for (int& x : a) x = io.readInt();
-	for (int& x : b) x = io.readInt();
-
-	vector<int> res = ntt.polyMul(a, b);
-	for (int v : res) {
-		io.printInt(v);
-		io.printChar(' ');
-	}
-	io.printChar('\n');
-}
