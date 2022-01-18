@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 struct FastIO {
         private:
                 const static int K = 1 << 15;
