@@ -4,7 +4,7 @@
 struct Montgomery {
 	private:
 		const ull R = 1ull << 32;
-		const uint MC, RR;
+		const uint MC, RR, P2;
 		__m256i p2_vec, p_vec, mc_vec, one_vec, rr_vec;
 		
 		static ull modPow(ull a, ull b, ull c) {
@@ -24,7 +24,7 @@ struct Montgomery {
 	public:
 		const uint P;
 
-		Montgomery(uint P) : P(P), RR((R % P) * R % P), MC((R * modPow(R % P, P - 2, P) - 1) / P) {
+		Montgomery(uint P) : P(P), P2(2*P), RR((R % P) * R % P), MC((R * modPow(R % P, P - 2, P) - 1) / P) {
 			p2_vec = _mm256_set1_epi32(2*P);
 			p_vec = _mm256_set1_epi64x(P);
 			mc_vec = _mm256_set1_epi64x(MC);
@@ -37,9 +37,10 @@ struct Montgomery {
 		///////////////////////
 
 		uint transform(uint v) const { return mul(v, RR); } // standard uint -> mont representation
-		uint reverse(uint v) const { return mul(v, 1) % P; } // mont representation -> standard uint
-		uint add(uint a, uint b) const { return (a+b < 2*P ? a+b : a+b - 2*P); }
-		uint sub(uint a, uint b) const { return (a < b) ? (2*P - b + a) : (a - b); }
+		uint reverse(uint v) const { uint r = mul(v, 1); return r >= P ? r - P : r; } // mont representation -> standard uint
+		uint add(uint a, uint b) const { uint r = a + b - P2; return r + (P2 & -(r >> 31)); }
+		uint sub(uint a, uint b) const { uint r = a - b; return r + (P2 & -(r >> 31)); }
+
 		uint inv(uint v) const { return pow(v, P - 2); }
 		uint mul(uint a, uint b) const {
 			ull t = (ull)a * b; // < 4P^2
@@ -62,14 +63,15 @@ struct Montgomery {
 		__m256i transform(__m256i a) const { return mul(a, rr_vec); }
 		__m256i reverse(__m256i a) const { return mul(a, one_vec); } // WARNING: result is in [0, 2P) not [0, P)
 		__m256i add(__m256i a, __m256i b) const {
-			__m256i res = _mm256_add_epi32(a, b);
-			__m256i sub = _mm256_sub_epi32(res, p2_vec);
-			__m256i mask = _mm256_srai_epi32(sub, 32);
-			return _mm256_blendv_epi8(sub, res, mask);
+			__m256i tmp = _mm256_add_epi32(a, b);
+			__m256i res = _mm256_sub_epi32(tmp, p2_vec);
+			__m256i mask = _mm256_srai_epi32(res, 32);
+			__m256i add = _mm256_and_si256(p2_vec, mask);
+			return _mm256_add_epi32(res, add);
 		}
 		__m256i sub(__m256i a, __m256i b) const {
 			__m256i res = _mm256_sub_epi32(a, b);
-			__m256i mask = _mm256_cmpgt_epi32(b, a);
+			__m256i mask = _mm256_srai_epi32(res, 32);
 			__m256i add = _mm256_and_si256(p2_vec, mask);
 			return _mm256_add_epi32(res, add);
 		}
